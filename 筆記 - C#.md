@@ -346,6 +346,7 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
 
 ## 錯誤處理
 * [.Net MVC 六種處理exception的方式(包含controller接錯)](http://programming.signage-cloud.org/dotnet_mvc_exception_handle/)
+* [請直接Throw而非Throw ex防止資訊丟失](https://www.dotblogs.com.tw/wasichris/2015/06/07/151505)
 * [包裝程式中共用的 try...catch(簡化try catch)](https://dotblogs.azurewebsites.net/rainmaker/2014/11/19/147361)
 * [建立客製化exception必要步驟](https://rainmakerho.github.io/2018/08/21/2018032/)
 * [StackOverFlow正確建立可序列化Exception](https://stackoverflow.com/questions/94488/what-is-the-correct-way-to-make-a-custom-net-exception-serializable)

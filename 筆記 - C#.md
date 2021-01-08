@@ -10,6 +10,8 @@
 * [判斷式與迴圈](#判斷式與迴圈)
 * [錯誤處理](#錯誤處理)
 
+[用Dict去做掃描比LINQ Where速度快上10倍以上](https://blog.darkthread.net/blog/linq-search-performance-issue)
+
 ## **《字串處理》**
 | 功能 | 語法 |
 |-----|-----|

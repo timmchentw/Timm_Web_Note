@@ -8,7 +8,9 @@
 * [繼承性](#繼承性) 
 * [運算子](#運算子)
 * [判斷式與迴圈](#判斷式與迴圈)
+* [錯誤處理](#錯誤處理)
 
+[用Dict去做掃描比LINQ Where速度快上10倍以上](https://blog.darkthread.net/blog/linq-search-performance-issue)
 
 ## **《字串處理》**
 | 功能 | 語法 |
@@ -343,6 +345,13 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
     reason = r;
 }
 ```
+
+## 錯誤處理
+* [.Net MVC 六種處理exception的方式(包含controller接錯)](http://programming.signage-cloud.org/dotnet_mvc_exception_handle/)
+* [請直接Throw而非Throw ex防止資訊丟失](https://www.dotblogs.com.tw/wasichris/2015/06/07/151505)
+* [包裝程式中共用的 try...catch(簡化try catch)](https://dotblogs.azurewebsites.net/rainmaker/2014/11/19/147361)
+* [建立客製化exception必要步驟](https://rainmakerho.github.io/2018/08/21/2018032/)
+* [StackOverFlow正確建立可序列化Exception](https://stackoverflow.com/questions/94488/what-is-the-correct-way-to-make-a-custom-net-exception-serializable)
 
 Reference:
 * [小山的教學平台](https://www.youtube.com/channel/UCmumrs_hb9s6eoVI29gLBgA) (建構子、靜態修飾、繼承性)

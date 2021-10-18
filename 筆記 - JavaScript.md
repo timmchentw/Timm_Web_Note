@@ -119,13 +119,15 @@ $('...').on(...)的事件中，<br>
 | `.find` | 尋找 |
 | `.show` | 顯示 |
 | `.hide` | 隱藏 |
-| `.children()` | 子元素DOM |
-| `.parent()` | 父元素DOM |
-| `.first()` | 第一個DOM |
-| `.siblings()` | 平行DOM遍歷 |
+| `.children('...')` | 子元素DOM |
+| `.parent('...')` | 父元素DOM |
+| `.first('...')` | 第一個DOM |
+| `.siblings('...')` | 平行DOM遍歷 |
+| `.prev('...')` | 向前平行DOM |
+| `.next('...')` | 向後平行DOM |
 | `.each(function() { ... })` | 每個DOM都... |
-| `.eq()` | 第幾個DOM(index) |
-| `.closest()` | 找最近的DOM |
+| `.eq(n)` | 第幾個DOM(index) |
+| `.closest('...')` | 找最近的DOM |
 | `.addClass('...')` | 新增class |
 | `.hasClass('...')` | 判斷DOM是否含有class name |
 | `.removeClass('...')` | 刪除class |
@@ -133,7 +135,6 @@ $('...').on(...)的事件中，<br>
 | `.prop('prop_name', new_value)`| 更改property內容 |
 | `.attr('attribute_name', new_value)`| 更改attribute內容 |
 | `.removeAttr('attribute_name')`| 移除attribute內容 |
-| `.next()` | 下一個DOM |
 
 觸發動作後，須在括號內加入`function() {...}`
 

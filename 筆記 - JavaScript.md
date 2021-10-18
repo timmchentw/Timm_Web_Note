@@ -99,6 +99,9 @@ $(function(){
   // TYPE SCRIPT HERE 
 });
 ```
+* $(this)
+$('...').on(...)的事件中，<br>
+可使用$(this)指到目前的DOM
 
 ### 基本功能
 
@@ -112,13 +115,19 @@ $(function(){
 | `.remove()` | 刪除該節點 |
 | `.before()` `.after()` | 插入HTML項目到該節點前/後 |
 | `.prepend()` `.append()` | 插入HTML子項目該節點最前/後 |
-| `.contents` |  |
-| `.find` |  |
-| `.show` |  |
-| `.hide` |  |
-| `.children('query')` |  |
-| `.parent('query')` |  |
-| `.first()` | |
+| `.contents` | 填入內容 |
+| `.find` | 尋找 |
+| `.show` | 顯示 |
+| `.hide` | 隱藏 |
+| `.children()` | 子元素 |
+| `.parent()` | 父元素 |
+| `.first()` | 第一個 |
+| `.siblings()` | 遍歷 |
+| `.eq()` | 第幾個(index) |
+| `.closest()` | 找最近的 |
+| `.hasClass('...')` | 判斷是否含有class name |
+| `.trigger()`| 觸發事件 |
+| `.prop('prop_name', new_value)`| 更改property內容 |
 
 觸發動作後，須在括號內加入`function() {...}`
 

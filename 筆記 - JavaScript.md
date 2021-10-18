@@ -135,6 +135,7 @@ $('...').on(...)的事件中，<br>
 | `.prop('prop_name', new_value)`| 更改property內容 |
 | `.attr('attribute_name', new_value)`| 更改attribute內容 |
 | `.removeAttr('attribute_name')`| 移除attribute內容 |
+| `.valid()` | 驗證form |
 
 觸發動作後，須在括號內加入`function() {...}`
 

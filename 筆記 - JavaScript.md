@@ -119,16 +119,21 @@ $('...').on(...)的事件中，<br>
 | `.find` | 尋找 |
 | `.show` | 顯示 |
 | `.hide` | 隱藏 |
-| `.children()` | 子元素 |
-| `.parent()` | 父元素 |
-| `.first()` | 第一個 |
-| `.siblings()` | 每個都找 |
-| `.each(function() { ... })` | 每個都... |
-| `.eq()` | 第幾個(index) |
-| `.closest()` | 找最近的 |
-| `.hasClass('...')` | 判斷是否含有class name |
+| `.children()` | 子元素DOM |
+| `.parent()` | 父元素DOM |
+| `.first()` | 第一個DOM |
+| `.siblings()` | 平行DOM遍歷 |
+| `.each(function() { ... })` | 每個DOM都... |
+| `.eq()` | 第幾個DOM(index) |
+| `.closest()` | 找最近的DOM |
+| `.addClass('...')` | 新增class |
+| `.hasClass('...')` | 判斷DOM是否含有class name |
+| `.removeClass('...')` | 刪除class |
 | `.trigger()`| 觸發事件 |
 | `.prop('prop_name', new_value)`| 更改property內容 |
+| `.attr('attribute_name', new_value)`| 更改attribute內容 |
+| `.removeAttr('attribute_name')`| 移除attribute內容 |
+| `.next()` | 下一個DOM |
 
 觸發動作後，須在括號內加入`function() {...}`
 

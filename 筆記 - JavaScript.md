@@ -122,7 +122,8 @@ $('...').on(...)的事件中，<br>
 | `.children()` | 子元素 |
 | `.parent()` | 父元素 |
 | `.first()` | 第一個 |
-| `.siblings()` | 遍歷 |
+| `.siblings()` | 每個都找 |
+| `.each(function() { ... })` | 每個都... |
 | `.eq()` | 第幾個(index) |
 | `.closest()` | 找最近的 |
 | `.hasClass('...')` | 判斷是否含有class name |

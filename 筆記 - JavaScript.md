@@ -116,6 +116,9 @@ $(function(){
 | `.find` |  |
 | `.show` |  |
 | `.hide` |  |
+| `.children('query')` |  |
+| `.parent('query')` |  |
+| `.first()` | |
 
 觸發動作後，須在括號內加入`function() {...}`
 

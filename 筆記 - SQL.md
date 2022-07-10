@@ -378,3 +378,9 @@ group by t.Gender
 ### 運算：
 `ROUND(ColumnName, n)` 四捨五入n位數 <br>
 `CAST(ColumnName AS NewFormat)` 切換變數型態為其他型態 (ex: int → float)
+
+###注意事項:
+1. 使用NOT IN、<>條件，需考慮該欄位是否為NULL，如果為NULL則不會被比較到，注意必須加入ISNULL(XXX, '')來Include進來
+2. JOIN ON & JOIN WHERE務必注意使用情境，JOIN ON可以在JOIN前先行篩選好資料(效能較佳)且較能維持原始ROW的數量、JOIN WHERE的資料較為全面(但效能差很多)
+3. WHERE中篩選DECLARE參數再去JOIN，對於某些的欄位會出現跑不出來的情況
+(e.g. SELECT * FROM TABLE_A a LEFT JOIN TABLE_B b on a.ROW_ID = b.ROW_ID WHERE a.STRANGE_COL = @PAR)

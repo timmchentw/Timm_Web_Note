@@ -7,6 +7,8 @@
 - [C#](https://github.com/timmchentw/Timm_WebNote/blob/main/.Net/%E7%AD%86%E8%A8%98%20-%20C%23.md)
 - [T4文字範本](https://github.com/timmchentw/Timm_WebNote/blob/main/.Net/%E7%AD%86%E8%A8%98%20-%20T4%E6%96%87%E5%AD%97%E7%AF%84%E6%9C%AC.md)
 - [Unit of Work (Dapper)](https://github.com/timmchentw/Timm_WebNote/blob/main/.Net/%E7%AD%86%E8%A8%98%20-%20Unit%20of%20Work%20(Dapper).md)
+- [Hangfire](.Net/筆記%20-%20Hangfire.md)
+- [Console App Management](.Net/筆記%20-%20Console%20App%20Manage.md)
 
 ### SQL
 - [SQL Server](https://github.com/timmchentw/Timm_WebNote/blob/main/%E7%AD%86%E8%A8%98%20-%20SQL.md)

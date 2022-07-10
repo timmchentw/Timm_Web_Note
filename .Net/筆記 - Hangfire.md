@@ -30,15 +30,17 @@
 * [安裝筆記](#安裝筆記)
     * [客製化設定](#客製化設定)
 * [應用範例](#應用範例)
-    * [建立與呼叫Job (Expression)](#建立與呼叫Job-Expression-)
-    * [Job Name顯示在Dashboard](#Job-Name顯示在Dashboard)
-    * [Controller搭配Swagger允許程式自動建立Job](#Controller搭配Swagger允許程式自動建立Job)
-    * [Controller搭配Swagger允許程式自動建立Job](#Controller搭配Swagger允許程式自動建立Job)
+    * 建立與呼叫Job (Expression)
+    * Job Name顯示在Dashboard
+    * Controller搭配Swagger允許程式自動建立Job
+    * 使用Job Enum作為API參數
 * [進階擴充](#進階擴充)
-    * [Job Parameters (客製化參數)](#Job-Parameters-客製化參數)
+    * Job Parameters (客製化參數)
 * [自定義擴充](#自定義擴充)
-    * [執行Console App](#執行Console-App)
-    * [整合Application Insights & Logger](#整合Application-Insights-Logger)
+    * [整合Identity](#整合Identity)
+    * [執行Console App](#%E5%9F%B7%E8%A1%8Cconsole-app)
+    * [整合Application Insights & Logger](#%E6%95%B4%E5%90%88application-insights--logger)
+* [注意事項](#注意事項)
 * [相關資源](#相關資源)
 
 #### 安裝筆記
@@ -786,6 +788,15 @@
         }
     }
     ```
+
+#### 注意事項
+* Database建議各個環境都需分開，避免Development時、Staging website同時會執行到Job的情況
+* 務必整合Program(Website) Logger，當資料庫或機器出現問題時有辦法釐清
+* 不同Job如放置在各自的Class Library時，務必注意Nuget Package版本需一致，避免DLL Hell的狀況
+* 如要避免改一個Job的套件、邏輯而影響其他Job，推薦將各Job以Console App的形式建立，配合Hangfire使用Process.Run的流程，使執行環境分離
+* 如佈署後出現403錯誤，可能是IP Restriction Policy設定太嚴格，稍微放寬Request頻率的限制可減少此問題出現
+* 推薦整合Identity、API Authentication等方式建立站台驗證機制
+
 
 #### 可優化內容
 * 擴充之State、Page等製作成Nuget Package增加可用性

@@ -353,5 +353,65 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
 * [建立客製化exception必要步驟](https://rainmakerho.github.io/2018/08/21/2018032/)
 * [StackOverFlow正確建立可序列化Exception](https://stackoverflow.com/questions/94488/what-is-the-correct-way-to-make-a-custom-net-exception-serializable)
 
+## Recursion (遞迴)
+```C#
+public static void RecursionMethod(string input)
+{
+    RecursionMethod(input);
+    //...
+}
+```
+
+## Delegate
+```C#
+public static void TryToDo(Func<string, bool> delegateMethod)
+{
+    string something = "Test";
+    try
+    {
+        bool result = delegateMethod(something);
+    }
+    catch
+    {
+        // Log
+    }
+}
+```
+
+## Expression
+
+## Yield
+
+## Class
+### Abstract Class & Interface
+### Partial Class
+
+## 網址與路徑
+### Path
+    Path.Combine("directory/root/", "/relativePath/file");
+    Path.GetFileName("fullpath");
+    Path.GetExtension("fullpath");
+
+## Stream
+```C#
+var fileStream = new MemoryStream();
+await file.CopyToAsync(fileStream);
+fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀取時從頭開始 (否則會有Exception)
+```
+
+## Expression-bodied 
+#### Expression-bodied Methods
+    MyFunction(int a, int b) =>a + b;
+#### Expression-bodied members
+
+##Asynchronize
+#### async/await
+
+* `GetAwaiter`
+* `Task.CompletedTask`
+* `XXXAsync().ConfigureAwait(false)` <br>
+    Why? 參考[About ConfigureAwait](https://medium.com/ricos-note/about-configureawait-5f173cd5f4f)
+
+
 Reference:
 * [小山的教學平台](https://www.youtube.com/channel/UCmumrs_hb9s6eoVI29gLBgA) (建構子、靜態修飾、繼承性)

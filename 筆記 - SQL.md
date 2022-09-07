@@ -6,6 +6,7 @@
 
 ## 行為 (CRUD)
 ### SELECT
+
 ```SQL
 SELECT *                          /* 全選 */
 SELECT [Col1], [Col2], ...        /* 多選 */
@@ -20,82 +21,115 @@ SELECT * INTO [NewTable] FROM [OldTable]    /* 創新表並匯入資料 */
 ``` 
 
 ### INSERT
+
 ```SQL
 INSERT INTO [DataBase]
              ( [Col1], [Col2], ... )
        VALUES( '001', '002', ... )
-       
+           
 INSERT INTO [Destination]
 SELECT colA, colB, colC
 FROM   [SourceDbTable]
 ```
 
 ### UPDATE 
-```SQL
-/* Update的目標一定要存在，不可null */
-UPDATE [DataBase]
-SET [Col1]='001', [Col2]='002', ...
-WHERE ...
-```
+* 一般用法
+
+    ```SQL
+    /* Update的目標一定要存在，不可null */
+    UPDATE [DataBase]
+    SET [Col1]='001', [Col2]='002', ...
+    WHERE ...
+    ```
+    
+* 搭配SELECT & WHERE使用
+
+    ```SQL
+    UPDATE TestTable1
+    SET Row2 = t.Row2
+    FROM (
+        SELECT '1' AS Row1, 'Timmy' As Row2
+        UNION
+        SELECT '1' AS Row1, 'Tim' As Row2
+    ) t
+    WHERE TestTable1.Row1 = t.Row1
+    ```
+    
+    ※多筆符合則會update select的最後一筆資料
+
 
 ### DELETE 
+
 ```SQL
 DELETE FROM [DataBase] 
 WHERE ...
 ```
+
 ### MERGE
 
 ## 來源
 ### FROM
+
 ```SQL
 /* 命名此來源為a (AS可略) */
 FROM [DataBase] AS a
-
+    
 /* nolock防止SQL表鎖住(WITH可略) */
 -- 僅限SELECT使用，可提升讀取速度、防止其他寫入行為失敗，但可能讀取到transaction即時更新的未完整資料
 FROM [DataBase] AS a WITH (nolock)
 ```
+
 ### JOIN
+
 ```SQL
 INNER JOIN [DataBase2] AS b       /* 被JOIN的表為b */
         ON a.[Col1] = b.[Col2]    /* 當a表Col1等於b表Col2時，取聯集 */
 ```
+
 * JOIN類別：
-```SQL
-INNER JOIN                /* 兩表皆不可JOIN有null之列 */
-```
-```SQL
-LEFT JOIN                 /* a表不變，b表可允許JOIN有null之列 */
 
-LEFT JOIN                 /* a表去除含b表之列 */
-    WHERE b.[Col2] IS NULL
-```
-```SQL
-RIGHT JOIN                /* b表不變，a表可允許JOIN有null之列 */
+    ```SQL
+    INNER JOIN                /* 兩表皆不可JOIN有null之列 */
+    ```
+    
+    ```SQL
+    LEFT JOIN                 /* a表不變，b表可允許JOIN有null之列 */
+    
+    LEFT JOIN                 /* a表去除含b表之列 */
+        WHERE b.[Col2] IS NULL
+    ```
+    
+    ```SQL
+    RIGHT JOIN                /* b表不變，a表可允許JOIN有null之列 */
+    
+    RIGHT JOIN                /* b表去除含a表之列 */
+         WHERE a.[Col1] IS NULL   
+    ```
+    
+    ```SQL
+    FULL OUTER JOIN           /* 兩表皆不變，皆可允許JOIN有null之列 */
+    
+    FULL OUTER JOIN           /* 兩表只取互不包含之列 */
+              WHERE a.[Col1] IS NULL     /* a或b皆可 */
+    ```
 
-RIGHT JOIN                /* b表去除含a表之列 */
-     WHERE a.[Col1] IS NULL   
-```
-```SQL
-FULL OUTER JOIN           /* 兩表皆不變，皆可允許JOIN有null之列 */
-
-FULL OUTER JOIN           /* 兩表只取互不包含之列 */
-          WHERE a.[Col1] IS NULL     /* a或b皆可 */
-```
 ![image](https://dsin.files.wordpress.com/2013/03/sqljoins_cheatsheet.png) <br>
 [Reference](https://dsin.wordpress.com/2013/03/16/sql-join-cheat-sheet/)
 
 ### PIVOT
 轉置資料(PIVOT/UNPIVOT)
+
 ```SQL
 SELECT ID, AVG(Score) AS Average_Score   
 FROM DBTable
 GROUP BY ID
 ```
+
 |ID|Average_Score|
 |--|--|
 |1|60|
 |3|100|
+
 ```SQL
 SELECT 'Average_Score' AS ID, [1], [2], [3]
 FROM  
@@ -108,6 +142,7 @@ FOR ID              // GROUP BY對象
 IN ([0], [1], [2])  // 轉置後指定資料，值可直接抓
 ) AS PivotTable;  
 ```
+
 |ID|1|2|3|
 |--|--|--|--|
 |Average_Score|60|NULL|100|
@@ -116,6 +151,7 @@ IN ([0], [1], [2])  // 轉置後指定資料，值可直接抓
 
 ## 操作
 ### WHERE
+
 ```SQL
 /* 括號內可優先處理邏輯 */
 WHERE (Col1 = 123 OR Col1 like '%123_')   /* like可搜尋字串contains、%代表任何可有可無字元、_代表指定字元數量 */
@@ -128,10 +164,12 @@ WHERE Col3 like N'%某非英文條件%'           /* 尋找相似字詞，N代�
 WHERE LEFT(Col3, 3) <> '123'              /* 字串左3個"不等於"123 */ 
 WHERE DateCol BETWEEN '2020-07-10 00:00:00' AND '2020-07-11 00:00:00' /* 在某個時間區間內 */
 ```
+
 目標函式：`LEFT(*, n)` `RIGHT(*, n)` `ISNULL(*, '')`(取代null為'')    <br>
 判斷符： `<>` `like '%XXX_'` `is not null` `BETWEEN * AND *`  <br>
 
 ### GROUP
+
 ```SQL
 /* 以Goods為組別，進行同組別計算 */
 SELECT [Goods], SUM([Count])
@@ -146,6 +184,7 @@ GROUP BY Goods, Seaso
 ```
 
 ### HAVING
+
 ```SQL
 SELECT [Goods], SUM([Count]) as CountSum
 FROM [DB]
@@ -154,11 +193,13 @@ HAVING CountSum > 100      /* 當函數結果需要篩選時，使用HAVING並�
 ```
 
 ### ORDER
+
 ```SQL
 ORDER BY Col1 DESC        /* ASC為升冪 */
 ```
 
 ### UNION
+
 ```SQL
 /* 合併同格式表(rbind)，並合併重複資料 */
 (SELECT...)
@@ -177,6 +218,7 @@ UNION ALL
 
 ### CREATE TABLE
 **新增表格**
+
 ```SQL
 CREATE TABLE NewTableName
 (ColName1 char(5),
@@ -196,6 +238,7 @@ FROM OLD_TBL;
 ### ALTER TABLE
 **修改表格**
 #### * 新增欄(Col) <br>
+
 ```SQL
 ALTER [DB]
 ADD 'NewColName' nvarchar(max)  /* 最後一欄為欄位格式 */
@@ -211,13 +254,23 @@ ADD 'NewColName' nvarchar(max)  /* 最後一欄為欄位格式 */
 `int` `smallint` `date` `datetime` `bit` ``<br> <br>
 
 #### * 刪除欄(Col)
+
 ```SQL
 ALTER [DB]
 DROP 'OldColName'
 ```
 
+#### * 新增PK
+```
+ALTER TABLE MY_TABLE
+ADD PRIMARY KEY (ROW_ID);
+```
+
+#### * 
+
 ### DROP TABLE
 **刪除表格**
+
 ```SQL
 DROP TABLE OldTableName
 ```
@@ -225,6 +278,7 @@ DROP TABLE OldTableName
 ### TRUNCATE TABLE
 **重置表格** <br>
 相比delete效能較佳，能刪除該表所有資料，並重置識別編號，但會保留資料表結構及其欄位、條件約束、索引等
+
 ```SQL
 TRUNCATE TABLE OldTableName
 ```
@@ -233,6 +287,7 @@ TRUNCATE TABLE OldTableName
 ## 技巧
 ### WITH
 **子查詢 (多層簡化-可優先查詢)**
+
 ```SQL
 /* 需置於整個SQL最前頭處 */
 WITH  MyTable AS (SELECT...),
@@ -243,7 +298,9 @@ FROM [DataBase] a
 LEFT JOIN MyTable b ON ...
 LEFT JOIN MyTable2 c ON ...
 ```
+
 相當於多層語法
+
 ```SQL
 SELECT a.[Col1] b.[Col2] c.[Col3]
 FROM [DataBase] a
@@ -254,6 +311,7 @@ LEFT JOIN (SELECT...) c ON ...
 ### OVER
 **分組處理 (可用於pick組別中最新者、組別加總或計數等)**
 * 分組新增序號
+
 ```SQL
 SELECT [Goods], [Count], [Date],
 
@@ -275,6 +333,7 @@ SELECT [Goods], [Count], [Date],
 (最後加入`HAVING ROW_NUM=1`即可得各分組最新資料) <br>
 
 * 分組加總
+
 ```SQL
 SELECT [Goods],
 
@@ -299,30 +358,71 @@ SELECT [Goods],
 #### 切換最小單位
 ##### (EX: YYYY/MM/DD 12:34 → YYYY/MM/DD 00:00)
 適用於計算單日/單月/單年的COUNT、SUM等
+
 ```SQL
 dateadd(day,0,datediff(day,0, myDate))  
 -- datediff計算julian date到myDate之間的"天數"
 -- dateadd將這些"天數"從julian date加回來 (即取到00:00)
 ```
-  
+
+## Constraint 
+
 ### Identity 自動流水號欄
 `資料表右鍵` → `設計` → `點選目標欄` → `識別規格` → `(為識別) 是` → `種子、增量設為1` → `儲存`  <br>
 此欄之後新增皆會+1，成為流水號 <br>
- 
+
 ### Primary Key 設定主索引鍵
 `資料表右鍵` → `設計` → `點選目標欄` → `(右鍵) 設定主索引鍵`  <br>
 此欄會成為主索引(primary key)，為非null且不重複 <br>
+
+### Foreign Key 設定外鍵
+限定該欄位只能為其他表的Primary Key，
+適合用於指定Join其他表的情境
+
+```SQL
+USE MY_DATABASE;   
+GO  
+ALTER TABLE MY_TABLE
+ADD CONSTRAINT FK_MYTABLE_MYCOLUMN_TABLE2_COL2
+FOREIGN KEY (MY_COLUMN) REFERENCES TABLE2(COL2)
+ON UPDATE CASCADE;    --連動更新
+ON DELETE CASCADE;    --連動刪除
+GO
+```
+
+※ 設定Update/Delete "cascade"可連動更新關聯的表! (須從源頭表更新，注意reference衝突時會無法設定)
+![1.png](images/sql/1.png "")
+
+### UNIQUE 不重複欄位
+限制該欄位不可寫入重複資料
+
+```SQL
+USE MY_DATABASE;   
+GO  
+ALTER TABLE MY_TABLE   
+ADD CONSTRAINT AK_MYTABLE_MYCOLUMN UNIQUE (MY_COLUMN);   
+GO  
+```
+
+### Index索引
+```SQL
+CREATE NONCLUSTERED INDEX IX__MY_TABLE__MY_COL ON MY_TABLE(MY_COL)
+```
  
+## 常用語法彙整
 ### 取得欄位重複row數量
+
 ```SQL
 SELECT Name, Grade, COUNT(*)
 FROM TABLE
 GROUP BY Name, Grade 
 HAVING COUNT(*) > 2
 ```
+
 可找出重複的ROW的資訊 <br>
 
 ### 取得DB資訊
+
 ```SQL
 -- 取得TABLE列表
   SELECT *
@@ -333,13 +433,16 @@ HAVING COUNT(*) > 2
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_NAME = 'M'
 ```
+
 ### 宣告臨時變數
 DECLARE
+
 ```SQL
 DECLARE @VAR_NAME, ...
 
 -- 之後語法就可以直接使用@VAR_NAME
 ```
+
 ### 轉置合併多欄為單格(FOR XML PATH)
 |Gender|Student_Name|
 |--|--|
@@ -351,6 +454,7 @@ DECLARE @VAR_NAME, ...
 |--|--|--|
 |Male|1|Timm|
 |Female|2|Vivian,Ariel|
+
 ```SQL
 WITH Student_Gender_Name AS (
 	SELECT Gender, Student_Name
@@ -367,7 +471,19 @@ FROM (
 ) as t
 group by t.Gender
 ```
+
 ※ STUFF(targetColumn, startCharNum, charLength, replaceChar)為中間插入/取代的用法，此處用於移除第一個字元','
+
+## Monitor
+* Block關係 (必須有Sa帳戶權限)
+
+    ```SQL
+    spwho2
+    ```
+
+* Monitor
+* 
+
 
 ## 其他
 ### 函數：
@@ -379,8 +495,12 @@ group by t.Gender
 `ROUND(ColumnName, n)` 四捨五入n位數 <br>
 `CAST(ColumnName AS NewFormat)` 切換變數型態為其他型態 (ex: int → float)
 
-###注意事項:
+### 注意事項:
 1. 使用NOT IN、<>條件，需考慮該欄位是否為NULL，如果為NULL則不會被比較到，注意必須加入ISNULL(XXX, '')來Include進來
 2. JOIN ON & JOIN WHERE務必注意使用情境，JOIN ON可以在JOIN前先行篩選好資料(效能較佳)且較能維持原始ROW的數量、JOIN WHERE的資料較為全面(但效能差很多)
 3. WHERE中篩選DECLARE參數再去JOIN，對於某些的欄位會出現跑不出來的情況
 (e.g. SELECT * FROM TABLE_A a LEFT JOIN TABLE_B b on a.ROW_ID = b.ROW_ID WHERE a.STRANGE_COL = @PAR)
+
+### 規範:
+1. `SELECT name, type, type_desc FROM sys.objects` 可搜尋DB物件縮寫進行命名規範 <br>
+2. 

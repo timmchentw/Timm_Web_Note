@@ -188,3 +188,24 @@ var myExceptResult = myList.AsEnumerable().Except(myExcept, new MyComparer())   
 </Html>
 
 ```
+
+## Web.config
+
+.net MVC
+設定可跳過My AuthorizeAttribute (不須驗證登入即可進入網頁)
+
+```xml
+<configuration>
+  <location path="MyController/MyAction">
+    <system.web>
+      <authorization>
+        <allow users="?" />
+      </authorization>
+    </system.web>
+  </location>
+</configuration>
+```
+
+## Entity Framework
+
+## Authentication

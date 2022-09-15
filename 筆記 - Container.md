@@ -1,9 +1,26 @@
 # Container
 
+- [Container](#container)
+  - [Docker](#docker)
+  - [Docker Compose](#docker-compose)
+  - [Dotnet Core](#dotnet-core)
+  - [Azure Container Registry](#azure-container-registry)
+  - [Azure Pipeline & Web App](#azure-pipeline--web-app)
+  - [Selenium Grid](#selenium-grid)
+    - [開發流程步驟](#開發流程步驟)
+    - [佈署步驟](#佈署步驟)
+  - [Nginx](#nginx)
+  - [IIS](#iis)
+  - [SQL Server](#sql-server)
+
 ## Docker
 
-[DockerDesktop](https://www.docker.com/products/docker-desktop/) </br>
-[DockerHub](https://hub.docker.com)
+本機電腦安裝Docker desktop，對於Docker的上手較為友善，可藉由UI了解container, image, repository之間的關係 </br>
+
+- [DockerDesktop](https://www.docker.com/products/docker-desktop/) </br>
+- [DockerHub](https://hub.docker.com) </br>
+
+下方為Docker desktop的Sample code，練習如何將pull, build, run & push image
 
 ```PowerShell
 #First, clone a repository
@@ -22,16 +39,52 @@ docker tag docker101tutorial timmchentw/docker101tutorial
 docker push timmchentw/docker101tutorial
 ```
 
-## Nginx
+## Docker Compose
 
-## IIS
+Docker compose適合用於多個Container偕同運作的情況，可避免各自獨立的Container互相依賴時，沒有Run起來的情況
 
-## SQL Server
+1. 建立docker-compose.yml檔案
+    - version會影響語法
+    - build & dockerfile是給專案Build所使用 (docker compose build)
+    - image為實際執行container所抓下來的Repo image (docker compose push & pull)
+    - ports須指定，才能讓其他service取用
+    - depends_on須指定另一個service
+
+   ```YAML
+    version: '3.4'
+
+    services:
+    web:
+        build:
+        context: .
+        dockerfile: MyProject/Dockerfile
+        image: myregistry.azurecr.io/myproject_web
+        ports:
+        - '8080:80'
+        environment:
+            ASPNETCORE_ENVIRONMENT: Production
+        depends_on:
+        - selenium_grid
+
+    selenium_grid:
+        image: myregistry.azurecr.io/selenium-standalone-chrome:4.4.0-20220812
+        ports:
+        - '4444:4444'
+        - '7900:7900'
+        shm_size: 2gb
+   ```
+
+2. Docker-compose語法可參考[官方文件](https://docs.docker.com/compose/reference/)(常用如Build, Publish, Push, Merge...)，Azure pipeline可參考[Task文件](https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/docker-compose?view=azure-devops)
+
+Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Desktop上看到compose群組
+    ![13.png](images/container/13.png)
 
 ## Dotnet Core
 
+.Net core內建整合Docker，在建立專案時可勾選自動產生DockerFile，與Azure Web App的整合度也高，在簡單的container環境下容易上手
+
 1. 參考[微軟官方文件](https://docs.microsoft.com/en-us/dotnet/core/docker/build-container?tabs=windows#create-the-dockerfile)說明
-2. 新增DockerFile在.csproj資料夾內
+2. 新增DockerFile在.csproj資料夾內</br>(Visual Studio在建立Solution時勾選可自動產生)
 
     ```docker
     #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
@@ -64,7 +117,7 @@ docker push timmchentw/docker101tutorial
     docker build -t IMAEGE_NAME -f Dockerfile .
     ```
 
-    ![4.png](images/container/4.png "")
+    ![4.png](images/container/4.png)
 
 4. 建立Container
 
@@ -72,70 +125,47 @@ docker push timmchentw/docker101tutorial
     docker create --name CONTAINER_NAME IMAGE_NAME
     ```
 
-    ![5.png](images/container/5.png "")
+    ![5.png](images/container/5.png)
 
-5. 如使用Azure Container Registry存放私有Image，可參考微軟官方文件進行佈署
+5. Push Container到Dockerhub</br>(如使用Azure Container Registry存放私有Image，可參考[微軟官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli)進行佈署)
+
+   ```docker
+   # Tag on image
+   docker tag IMAGE_NAME DOCKER_HUB_USER/IMAGE_NAME:TAG_NAME
+   # Login to DockerHub
+   docker login
+   # Push to DockerHub
+   docker push DOCKER_HUB_USER/IMAGE_NAME
+   ```
+
 6. 有多個Container同時執行與相依的情況，需額外新增docker-compose.yml
 
-    Ps. 佈署到Azure參考下方方法 </br>
-    Ps2. VS支援自動產生docker compose檔案 (可直接在Docker Desktop Debug)
-    ![10.png](images/container/10.png "")
-    ![11.png](images/container/11.png "")
+    Ps. VS支援自動產生docker compose檔案 (可直接在Docker Desktop Debug)
+    ![10.png](images/container/10.png)
+    ![11.png](images/container/11.png)
 
 ## Azure Container Registry
 
-用於存放Private Container Images (可與Web App整合)
+類似於DockerHub，用於存放Private Container Images (可與Web App整合)，其Image格式為XXX.azurecr.io/IMAGE_NAME
 
 1. 建立Azure container Registry
-2. 使用VS or Pipeline佈署到Azure container Registry
+2. 使用Visual Studio or Pipeline佈署到Azure container Registry </br>
+   (Pipeline YAML語法參考下方Pipeline說明)
 3. 建立Azure Web App or Function (Linux & Docker)
-    ![6.png](images/container/6.png "")
+    ![6.png](images/container/6.png)
 4. 建立時直接綁定Azure Container Registry中的Images & Tag
-    ![7.png](images/container/7.png "")
-5.可直接在Deployment Center直接設定CD、或可之後用Azure pipeline覆蓋設置
-    ![9.png](images/container/9.png "")
-※ Public image (e.g. DockerHub) 可使用Azure CLI匯入ACR (參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-import-images?tabs=azure-cli))
+   ![7.png](images/container/7.png)
+5. 可直接在Deployment Center直接設定CD、或可之後用Azure pipeline覆蓋設置
+    ![9.png](images/container/9.png)
+
+※ Public image (e.g. DockerHub) 可使用Azure CLI匯入ACR (參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-import-images?tabs=azure-cli)) </br>
 ※ 清理Image請參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge)
-
-## Docker Compose
-
-1. 建立docker-compose.yml檔案
-    * version會影響語法
-    * build & dockerfile是給專案Build所使用 (docker compose build)
-    * image為實際執行container所抓下來的Repo image (docker compose push & pull)
-    * ports須指定，才能讓其他service取用
-    * depends_on須指定另一個service
-
-   ```YAML
-    version: '3.4'
-
-    services:
-    web:
-        build:
-        context: .
-        dockerfile: MyProject/Dockerfile
-        image: myregistry.azurecr.io/myproject_web
-        ports:
-        - '8080:80'
-        environment:
-            ASPNETCORE_ENVIRONMENT: Production
-        depends_on:
-        - selenium_grid
-
-    selenium_grid:
-        image: myregistry.azurecr.io/selenium-standalone-chrome:4.4.0-20220812
-        ports:
-        - '4444:4444'
-        - '7900:7900'
-        shm_size: 2gb
-   ```
-
-2. 可參考上方Visual Studio建立Docker專案，Debug後可在Docker Desktop上看到compose群組
-    ![13.png](images/container/13.png "")
 
 ## Azure Pipeline & Web App
 
-1. Docker compose build (Azure Container Registry)
+以下方法整合Azure Pipeline (YAML)、Azure Container Registry (ACR) 與 Azure Web App (Linux Container)，讓.Net Core Website佈署到雲端環境
+
+1. Docker compose build
 2. Docker compose push (Azure Container Registry)
 3. Azure Web App deploy</br>
 
@@ -195,11 +225,12 @@ docker push timmchentw/docker101tutorial
     ```
 
     ※第一次Run會有Registry & App Service的Permission Approve
-    ![12.png](images/container/12.png "")
+    ![12.png](images/container/12.png)
 
     ※ Docker Debug資訊參考Diagnose and solve problems (Application Logs→Container Issues)
-        ![8.png](images/container/8.png "")
-4. 如需將CD拆分成Release pipeline，須注意將docker-compose.yml push到Artifact再取出使用
+        ![8.png](images/container/8.png)
+4. 如需將CD拆分成Release pipeline，須注意將docker-compose.yml push到Artifact再取出使用</br>
+(下例包含將現有的docker-compose.yml中的image加入TAG並改名，原因為Azure Web App在目前(2022)還尚未支援docker-compose merge的產出格式)
 
     ```YAML
     # Push compose config for release pipelines 
@@ -288,6 +319,12 @@ docker push timmchentw/docker101tutorial
 
 ## Selenium Grid
 
+優點: 已將瀏覽器 & Web Driver整合到容器當中，其隔離性與固定瀏覽器版本，使呼叫端不需頻繁更新瀏覽器與Web Driver! 且可以在Cloud-base web app中執行
+
+### 開發流程步驟
+
+用於本機開發，Debug "Call RemoteDriver"的運作狀況
+
 1. 參考Selenium Docker (https://github.com/SeleniumHQ/docker-selenium)
 2. 使用Docker指令安裝特定瀏覽器與版本
 
@@ -295,15 +332,15 @@ docker push timmchentw/docker101tutorial
     docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-firefox:4.3.0-20220726
     ```
 
-    ![2.png](images/container/2.png "")
+    ![2.png](images/container/2.png)
 
 3. 進入後台(URL:`http://localhost:4444/ui`)確認Selenium Grid狀態與Session
-    ![1.png](images/container/1.png "")
+    ![1.png](images/container/1.png)
 4. 程式端直接使用RemoteDriver連到losthost port 4444，即可調用
 
     ```C#
      var driver = new RemoteWebDriver(new Uri("http://localhost:4444/wd/hub"), new FirefoxOptions());
-                driver.Navigate().GoToUrl("https://www.google.com/");
+    driver.Navigate().GoToUrl("https://www.google.com/");
     ```
 
     ![3.png](images/container/3.png)
@@ -311,5 +348,37 @@ docker push timmchentw/docker101tutorial
 5. 關閉後Session將會釋出
 
     ```C#
-        driver.Quit();
+    driver.Quit();
     ```
+
+6. 日後Debug selenium皆須要Docker Run Selenium Container，避免RemoteDriver連不到的情況
+
+### 佈署步驟
+
+佈署環境需要透過docker-compose.yml檔案設定啟用container (包含版本TAG)，呼叫方法與本機Docker有些許差異
+
+1. 須使用docker-compose.yml設定 Container Service
+
+    ```YAML
+    version: '3.4'
+
+    services:
+    selenium_grid:
+        image: selenium/selenium-standalone-chrome:4.4.0-20220812
+        ports:
+        - '4444:4444'
+        - '7900:7900'
+        shm_size: 2gb
+    ```
+
+2. 實際運作須使用docker-compose.yml當中的service name配合port做呼叫
+
+   ```C#
+   var driver = new RemoteWebDriver(new Uri("http://selenium_grid:4444/wd/hub"), new FirefoxOptions());
+   ```
+
+## Nginx
+
+## IIS
+
+## SQL Server

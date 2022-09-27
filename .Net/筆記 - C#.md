@@ -319,9 +319,11 @@ doc.Load(ms, Encoding.UTF8);
 ```
 
 ## Cache快取
+
 * MemoryCache (存在全域，不隨Http Request而變)
 * ObjectCache 
 * HttpContext Cache (隨著Http Request而變，可為各個user個別存取)
+
 ```C#
 List<string> currentCache = HttpContext.Current.Cache["cacheName"] as List<string>
 List<string> newCache = new List<string>();
@@ -338,6 +340,7 @@ if (!Enumerable.SequenceEqual(currentCache, newCache)) // 自訂時機判斷更�
                                      new System.Web.Caching.CacheItemRemovedCallback(RemovedCallback)); // 刪除快取後的callback行為 (通知程式快取已刪除用)
 }
 ```
+
 ```C#
 public static void RemovedCallback(string k, object v, System.Web.Caching.CacheItemRemovedReason r)
 {
@@ -363,6 +366,7 @@ public static void RecursionMethod(string input)
 ```
 
 ## Delegate
+
 ```C#
 public static void TryToDo(Func<string, bool> delegateMethod)
 {
@@ -380,19 +384,44 @@ public static void TryToDo(Func<string, bool> delegateMethod)
 
 ## Expression
 
+非Runtime的表示式 (適合用於欄位Mapping、延遲執行等)，常見例子為LINQ
+
+```C#
+Expression<Func<string, int>> example = (stringInput => Convert.ToInt32(stringInput));
+
+Expression<Func<MyClass, object>> example2 = (x => x.Prop1);
+```
+
 ## Yield
+
+分批作業
+
+```C#
+public IEnumerable<string> Sample() 
+{
+    for (i = 0; i < 10; i++)
+    {
+        yield return i;
+    }
+}
+```
 
 ## Class
 ### Abstract Class & Interface
 ### Partial Class
 
 ## 網址與路徑
+
 ### Path
+
+  ```C#
     Path.Combine("directory/root/", "/relativePath/file");
     Path.GetFileName("fullpath");
     Path.GetExtension("fullpath");
+  ```
 
 ## Stream
+
 ```C#
 var fileStream = new MemoryStream();
 await file.CopyToAsync(fileStream);
@@ -404,7 +433,7 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
     MyFunction(int a, int b) =>a + b;
 #### Expression-bodied members
 
-##Asynchronize
+## Asynchronize
 #### async/await
 
 * `GetAwaiter`
@@ -412,6 +441,20 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 * `XXXAsync().ConfigureAwait(false)` <br>
     Why? 參考[About ConfigureAwait](https://medium.com/ricos-note/about-configureawait-5f173cd5f4f)
 
+## Reflection
+
+### typeof
+
+### attributes
+
+### CreateInstance
+
+```C#
+Type type = Type.GetType(name, true);
+object instance = Activator.CreateInstance(type);
+PropertyInfo prop = type.GetProperty(property);
+prop.SetValue(instance, value, null);
+```
 
 Reference:
 * [小山的教學平台](https://www.youtube.com/channel/UCmumrs_hb9s6eoVI29gLBgA) (建構子、靜態修飾、繼承性)

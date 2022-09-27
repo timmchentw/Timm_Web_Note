@@ -1,8 +1,11 @@
 # Entity Framework
 
 ## Code First
-#### DbContext
-#### DbSet
+
+### DbContext
+
+### DbSet
+
 * Migrate Database
 
 ```PowerShell
@@ -90,9 +93,18 @@ public partial class Role
 }
 ```
 
+* Eager, Lazy, Implicit Load
 
-* Eager, Lazy , Implicit Load
+* Fluent API
+* Data Annotations
+
+* Value Conversions - to convert the enum to int when reading/writing to db
+* [Data Seeding](https://docs.microsoft.com/en-us/ef/core/modeling/data-seeding) - to add the enum values in the db, in a migration
 
 ## Database First
 
-#### .edmx
+### .edmx
+
+
+## 參考資源
+* [Enum to DB](https://stackoverflow.com/questions/50375357/how-to-create-a-table-corresponding-to-enum-in-ef-core-code-first)

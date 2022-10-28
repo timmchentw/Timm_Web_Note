@@ -206,6 +206,19 @@ var myExceptResult = myList.AsEnumerable().Except(myExcept, new MyComparer())   
 </configuration>
 ```
 
-## Entity Framework
+## Entity Framework 6
 
 ## Authentication
+
+## Dependency Injection
+
+### Microsoft.Extensions.DependencyInjection
+
+如同.net core內建的DI，官方套件同樣支援.Net 4.6.1以上版本
+
+```C#
+```
+
+
+* 參考來源: [余小章-如何使用 DI Container for Microsoft.Extensions.DependencyInjection](https://www.dotblogs.com.tw/yc421206/2020/10/29/standard_di_container_for_microsoft_extensions_dependencyInjection)
+

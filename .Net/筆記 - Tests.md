@@ -13,8 +13,11 @@
 ### Test methods
 
 * TestMethod
+* DataTestMethod
 * DataRow
 * DynamicData
+
+※ 以下範例為.Net 6環境，Host & DI語法稍有不同
 
 ```C#
 [TestClass]
@@ -82,7 +85,7 @@ public class MyTests
 
     // 在所有Test結束之後 (必須為Static)
     [ClassCleanup]
-    public static void Clean(TestContext testContext)
+    public static void Clean()
     {
         _host.Dispose();   // Clear app host
     }

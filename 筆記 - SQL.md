@@ -25,7 +25,8 @@ SELECT * INTO [NewTable] FROM [OldTable]    /* 創新表並匯入資料 */
 ```SQL
 INSERT INTO [DataBase]
              ( [Col1], [Col2], ... )
-       VALUES( '001', '002', ... )
+       VALUES( '001', '002', ... ),
+             ( '001-2', '002-2', ... )
            
 INSERT INTO [Destination]
 SELECT colA, colB, colC
@@ -221,8 +222,9 @@ UNION ALL
 
 ```SQL
 CREATE TABLE NewTableName
-(ColName1 char(5),
- ColName2 varchar(10), ...)
+(ColName1 char(5) NULL,
+ ColName2 varchar(10) NULL,
+ ColName3 int IDENTITY(1,1) NOT NULL  ...)
  
  --從現有表格複製
 SELECT *
@@ -241,7 +243,9 @@ FROM OLD_TBL;
 
 ```SQL
 ALTER [DB]
-ADD 'NewColName' nvarchar(max)  /* 最後一欄為欄位格式 */
+ADD NewColName nvarchar(50) NULL  /* 第二欄為欄位格式 */
+ALTER COLUMN ExistingColName bit NOT NULL /* 更改現有欄位 */
+RENAME COLUMN OldColumnName TO NewColumnName
 ```
 
 | 資料類型(n=Int\|max) | 意義 | 占用資源 | 
@@ -371,9 +375,29 @@ dateadd(day,0,datediff(day,0, myDate))
 `資料表右鍵` → `設計` → `點選目標欄` → `識別規格` → `(為識別) 是` → `種子、增量設為1` → `儲存`  <br>
 此欄之後新增皆會+1，成為流水號 <br>
 
+```SQL
+CREATE TABLE NewTableName
+(ColName int IDENTITY(1,1) NOT NULL)
+```
+
+* 對此欄位強制寫入資料時，須開啟Identity insert
+
+```SQL
+SET IDENTITY_INSERT dbo.MyTable ON;
+INSERT INTO dbo.MyTable (IdentityCol) VALUES (3)
+...
+SET IDENTITY_INSERT dbo.MyTable OFF;
+```
+
 ### Primary Key 設定主索引鍵
 `資料表右鍵` → `設計` → `點選目標欄` → `(右鍵) 設定主索引鍵`  <br>
 此欄會成為主索引(primary key)，為非null且不重複 <br>
+
+```SQL
+ALTER TABLE MyTable
+ADD PRIMARY KEY (TargetColumn);
+```
+
 
 ### Foreign Key 設定外鍵
 限定該欄位只能為其他表的Primary Key，

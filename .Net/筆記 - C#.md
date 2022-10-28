@@ -1,4 +1,5 @@
 # C# 筆記
+
 * [字串處理](#字串處理)
 * [變數型態](#變數型態)
 * [存取授權](#存取授權)
@@ -13,6 +14,7 @@
 [用Dict去做掃描比LINQ Where速度快上10倍以上](https://blog.darkthread.net/blog/linq-search-performance-issue)
 
 ## **《字串處理》**
+
 | 功能 | 語法 |
 |-----|-----|
 | 黏合字串與變數  |  `$"ABC....{Var or "string"}...."` |
@@ -34,6 +36,7 @@
 | 檢查是否為空  |  `string.isNullorEmpty("String")` |
 
 ### 檔案字串
+
 | 功能 | 語法 |
 |-----|-----|
 | 取得檔名(不包含附檔名)  |  `Path.GetFileNameWithoutExtension(filePath)` |
@@ -43,6 +46,7 @@
 
 
 ### Regex (Regular Expression字串格式檢查)
+
 | 功能 | 語法 |
 |-----|-----|
 | 允許範圍 | `[a-z]` `[0-9]` |
@@ -112,7 +116,10 @@
 | Dictionary | 字典 |  |  |
 | Tuple | 雙參數 |||
 
-## 存取授權
+## 修飾詞
+
+* 存取授權
+
 | 存取類別 | 說明 |
 | ----- | ----- |
 | public | 可公開存取 |
@@ -120,26 +127,39 @@
 | protected | 同class 或 原class衍伸之class可存取 | 
 | internal | 同project可存取 |  
 
-void 物件無輸出 (不需return)
-static 靜態修飾 (可直接呼叫不需new、可防止改動、同class可供全部共用)  <br>
+* 返回型別: `void` 物件無輸出 (不需return)、`Task` (搭配async不須output)
+* `static` 靜態修飾 (可直接呼叫不需new、可防止改動、同class可供全部共用、缺點為input參數無法共享、注意記憶體使用量與全域共用修改的問題)
+* `async` 非同步方法，務必在方法內包含至少一個await (async method可呼叫sync method，反之無法，因此建議code都使用async方法為呼叫源頭)
+* `abstract`抽象方法(不可實作)、`virtual`(可複寫方法)、`override`(已覆寫方法)
 
-## 建構子
-Contructor  <br>
+## 建構子 Contructor
+
 1. 無output，可input (有即強迫使用者輸入input)
-2. 與某class同名，且無型別
+2. 與class同名，且無型別
 3. 可直接執行與賦值
 4. input可overloaded (創很多個constructor，每個input都不一樣)
-```C#
+5. 可直接access readonly property
 
+```C#
+public class MyClass
+{
+  private string _input { get; }
+
+  public MyClass(string input)
+  {
+      _input = input;
+  }
+}
 ```
 
-## 靜態修飾
-Static  <br>
+## 靜態修飾 Static
+
 **(1) 可直接呼叫**
+
 ```C#
 class Math
 {
-  public *static* int max(int a, int b)
+  public /**/static/**/ int max(int a, int b)
   {
     int result;
     if (a < b) result = b;
@@ -148,7 +168,9 @@ class Math
   }
 }
 ```
+
 使用時不必new新物件(Math m = new Math)  <br>
+
 ```C#
 int a = 10;
 int b = 20;
@@ -156,20 +178,26 @@ int c = Math.max(a,b)
 ```
 
 **(2) 同class可供全部共用**  <br>
+
 於class Student中 (如[建構子](#建構子)所示)  <br>
+
 ```C#
 // 加入靜態宣告
 public static int PassGrade = 2;
 ```
+
 ```C#
 // 當使用此class時，更改靜態宣告值
 Student.PassGrade = 1; 
 ```
+
 ```C#
 // 更改結果可供全class使用
 s1.isPass() -> True
 ```
+
 p.s.
+
 ```C#
 在Class Student中新增:
 pulic bool isPass()
@@ -180,13 +208,17 @@ pulic bool isPass()
 ```
 
 
-## 繼承性
+## 繼承性 Inheritance
+
 ```C#
 class B : A         //B繼承A之屬性(內建變數、Function等)
 {...}
 ```
 
+* 
+
 ## 修飾詞
+
 | Base基底修飾 | 說明 |
 | -- | -- |
 | `abstract` | 未具現化，需實作才可使用 (not instantiated) |
@@ -201,8 +233,8 @@ class B : A         //B繼承A之屬性(內建變數、Function等)
 
 [微軟範例](https://docs.microsoft.com/zh-tw/dotnet/csharp/programming-guide/classes-and-structs/knowing-when-to-use-override-and-new-keywords) <br>
 
-
 ## 運算子
+
 | 運算子 | 意義 |
 | --- | --- |
 | `++` `--` | ±1 | 
@@ -212,46 +244,64 @@ class B : A         //B繼承A之屬性(內建變數、Function等)
 | `/` `%` | 除取商數/餘數 |
 
 ## 判斷式與迴圈
+
 ### **IF** 
+
 `if (!var)` → `if(int==0)` or `if(string==null)`  <br>
 !代表相反之涵義
 
 ### **?: ??**
-?: 簡化條件式為單行
+
+* ?: 簡化條件式為單行
+
 ```C#
 int a = b > 0 ? b : c;
 // 宣告a整數值，當b>0時則a=b，否則為a=c
 ```
-?? 簡化檢查null值
+
+* ?? 簡化檢查null值
+
 ```C#
 int a = b ?? c ?? d;
 // 宣告a整數值，當b為非null時a=b；當b為null時a=c；當c為null時a=d...
 ```
 
-### **SWITCH** 
+* ?.: Null Operator
+
+```C#
+string value = myClass?.Value;
+// 允許取得Null instance的Property (會返回null)
+```
+
+### **SWITCH**
+
 簡化版IF
+
 ```C#
 switch (var)
 {
   case 1: ...
-    break
+    break;
   case 2: ...
-    break
+    throw ...;
   default : ...
-    break
+    return ...;
 }
 ```
 
 ### **FOR**
+
 ```C#
-for (int i=0; i<10; i++)
+for (int i = 0; i < 10; i++)
 {
   i ;
 }
 ```
 
 ### **FOREACH** 
+
 將LIST逐層處理
+
 ```C#
 foreach (var item in a_LIST)
 {
@@ -259,33 +309,40 @@ foreach (var item in a_LIST)
 }
 ```
 
-### **TRY & CATCH** 
+### **TRY & CATCH**
+
 嘗試執行與失敗接住
+
 ```C#
 try
 {
-  try something here
+    //try something here
 }
 catch (Exception e)
 {
-  go to here if error occured
-  console.log(e)   // Explain the error
+    //go to here if error occured
+    console.log(e)   // Explain the error or logging
 }
 finally 
 {
-  any condition will go to here
+    //any condition will go to here. Such as dispose
 }
 ```
 
 ### HTML處理
+
 #### HtmlAgilityPack
+
 * HtmlDocument
+
 ```C#
 HtmlDocument doc = new HtmlDocument();
 doc.Load('File Path String')
 // doc.LoadHtml('Html String')
 ```
+
 * HtmlNode
+  
 ```C#
 HtmlNode node1 = doc.CreateTextNode('Html Node String');
 doc.DocumentNode.AppendChild(node1);  // 對整個HTML插入子節點 (PreoendChild / AppendChild)
@@ -293,11 +350,14 @@ doc.DocumentNode.AppendChild(node1);  // 對整個HTML插入子節點 (PreoendCh
 HtmlNode node2 = doc.SelectSingleNode('XPATH');
 node2.ParentNode.InsertBefore(node1);  // 選定節點並插入子節點 (InsertBefore / InsertAfter)
 ```
+
 * 取出Html (String)
 `doc.DocumentNode.InnerHtml`
 
 ### 檔案讀寫
+
 * StreamReader / StreamWriter  `讀寫文字檔`
+
 ```C#
 StreamReader sr = new StreamReader(filepath, Encoding.UTF8);   // Read HTML file
             string myString = sr.ReadToEnd();
@@ -305,10 +365,13 @@ StreamReader sr = new StreamReader(filepath, Encoding.UTF8);   // Read HTML file
             sr.Dispose();
 // 寫入則為：sw.Write(myString)，其他宣告與指令相同
 ```
+
 * 
 
 ## 注意事項
+
 * 使用WebClient載入https連結時，如.net framework版本較舊、憑證版本較新，須先預設較新版本的SSL/TLS憑證
+* 
 ```C#
 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;  // 定義TLS1.2版本
 
@@ -321,8 +384,9 @@ doc.Load(ms, Encoding.UTF8);
 ## Cache快取
 
 * MemoryCache (存在全域，不隨Http Request而變)
-* ObjectCache 
 * HttpContext Cache (隨著Http Request而變，可為各個user個別存取)
+* ObjectCache 
+* Distributed Cache
 
 ```C#
 List<string> currentCache = HttpContext.Current.Cache["cacheName"] as List<string>
@@ -350,6 +414,7 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
 ```
 
 ## 錯誤處理
+
 * [.Net MVC 六種處理exception的方式(包含controller接錯)](http://programming.signage-cloud.org/dotnet_mvc_exception_handle/)
 * [請直接Throw而非Throw ex防止資訊丟失](https://www.dotblogs.com.tw/wasichris/2015/06/07/151505)
 * [包裝程式中共用的 try...catch(簡化try catch)](https://dotblogs.azurewebsites.net/rainmaker/2014/11/19/147361)
@@ -357,6 +422,7 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
 * [StackOverFlow正確建立可序列化Exception](https://stackoverflow.com/questions/94488/what-is-the-correct-way-to-make-a-custom-net-exception-serializable)
 
 ## Recursion (遞迴)
+
 ```C#
 public static void RecursionMethod(string input)
 {
@@ -407,7 +473,12 @@ public IEnumerable<string> Sample()
 ```
 
 ## Class
+
 ### Abstract Class & Interface
+
+* Abstract: 允許實作邏輯，並可標記abstract方法，強制Implement class override抽象方法 (適合用於共享部分Protected function)
+* Interface: 強制Implement class實作指定Function/Property，並不可含任何Implementation
+
 ### Partial Class
 
 ## 網址與路徑
@@ -428,13 +499,17 @@ await file.CopyToAsync(fileStream);
 fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀取時從頭開始 (否則會有Exception)
 ```
 
-## Expression-bodied 
-#### Expression-bodied Methods
+## Expression-bodied
+
+### Expression-bodied Methods
+
     MyFunction(int a, int b) =>a + b;
+
 #### Expression-bodied members
 
 ## Asynchronize
-#### async/await
+
+### async/await
 
 * `GetAwaiter`
 * `Task.CompletedTask`
@@ -457,4 +532,6 @@ prop.SetValue(instance, value, null);
 ```
 
 Reference:
+
 * [小山的教學平台](https://www.youtube.com/channel/UCmumrs_hb9s6eoVI29gLBgA) (建構子、靜態修飾、繼承性)
+* []()

@@ -9,13 +9,14 @@
 * Migrate Database
 
 ```PowerShell
-#注意如果DbContext所在Project & connection strings專案不同，需把Package Manager Console 右上角的Default Project改為DbContext所在Project，並且手動指定Connection Strings
+# Package Manager Console 命令
+# 注意如果DbContext所在Project & connection strings專案不同，需把Package Manager Console 右上角的Default Project改為DbContext所在Project，並且手動指定Connection Strings
 Add-Migration Initial
 
-#小心會直接更新Database!
+# 小心會直接更新Database!
 Update-Database -Verbose
 
-#日後更新可改用這方法產生Script，再到SSMS Run
+# 日後更新可改用這方法產生Script，再到SSMS Run
 Script-Migration 0 Initial
 ```
 

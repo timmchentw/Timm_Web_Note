@@ -12,12 +12,15 @@
 # Package Manager Console 命令
 # 注意如果DbContext所在Project & connection strings專案不同，需把Package Manager Console 右上角的Default Project改為DbContext所在Project，並且手動指定Connection Strings
 Add-Migration Initial
+# 如有多個DbContext檔案，指定其名稱
+Add-Migration Initial -context DataContextName
 
 # 小心會直接更新Database!
 Update-Database -Verbose
 
 # 日後更新可改用這方法產生Script，再到SSMS Run
 Script-Migration 0 Initial
+Script-Migration -From Initial -To XXX
 ```
 
 * Fluent API
@@ -33,6 +36,7 @@ public partial class MyDbContext : DbContext
     {
         if (!optionsBuilder.IsConfigured)
         {
+            // 注意這邊的Connection string必須在Main project裡面DI註冊好 (services.AddDbContext)
             optionsBuilder.UseSqlServer("Name=ConnectionStrings:MyDb");
         }
     }

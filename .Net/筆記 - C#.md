@@ -323,6 +323,10 @@ catch (Exception e)
     //go to here if error occured
     console.log(e)   // Explain the error or logging
 }
+catch (Exception e) when (e.Message.Contains("500")))
+{
+    // Conditional catch
+}
 finally 
 {
     //any condition will go to here. Such as dispose

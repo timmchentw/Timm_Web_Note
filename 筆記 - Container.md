@@ -12,6 +12,7 @@
   - [Nginx](#nginx)
   - [IIS](#iis)
   - [SQL Server](#sql-server)
+  - [References](#references)
 
 ## Docker
 
@@ -86,7 +87,7 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 1. 參考[微軟官方文件](https://docs.microsoft.com/en-us/dotnet/core/docker/build-container?tabs=windows#create-the-dockerfile)說明
 2. 新增DockerFile在.csproj資料夾內</br>(Visual Studio在建立Solution時勾選可自動產生)
 
-    ```docker
+    ```Dockerfile
     #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
     FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
@@ -111,10 +112,11 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
     ENTRYPOINT ["dotnet", "MyProject.dll"]
     ```
 
-3. 在該路徑下執行Docker Build
+3. 在該路徑下執行Docker Build，產生image
 
     ```docker
-    docker build -t IMAEGE_NAME -f Dockerfile .
+    docker build -t counter-image -f Dockerfile .
+    :: counter-image is the name of image
     ```
 
     ![4.png](images/container/4.png)
@@ -122,7 +124,8 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 4. 建立Container
 
     ```docker
-    docker create --name CONTAINER_NAME IMAGE_NAME
+    docker create --name core-counter counter-image
+    :: core-counter is the name of container
     ```
 
     ![5.png](images/container/5.png)
@@ -131,11 +134,11 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 
    ```docker
    # Tag on image
-   docker tag IMAGE_NAME DOCKER_HUB_USER/IMAGE_NAME:TAG_NAME
+   docker tag counter-image DOCKER_HUB_USER/counter-image:TAG_NAME
    # Login to DockerHub
    docker login
    # Push to DockerHub
-   docker push DOCKER_HUB_USER/IMAGE_NAME
+   docker push DOCKER_HUB_USER/counter-image
    ```
 
 6. 有多個Container同時執行與相依的情況，需額外新增docker-compose.yml
@@ -159,11 +162,25 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
     ![9.png](images/container/9.png)
 
 ※ Public image (e.g. DockerHub) 可使用Azure CLI匯入ACR (參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-import-images?tabs=azure-cli)) </br>
-※ 清理Image請參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge)
+
+```AzureCLI
+az login
+```
+
+```AzureCLI
+az acr import \
+  --name myregistry \
+  --source docker.io/library/hello-world:latest \
+  --image hello-world:latest
+```
+
+※ 自動清理Image請參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge)
 
 ## Azure Pipeline & Web App
 
 以下方法整合Azure Pipeline (YAML)、Azure Container Registry (ACR) 與 Azure Web App (Linux Container)，讓.Net Core Website佈署到雲端環境
+
+![16.png](images/container/16.png)
 
 1. Docker compose build
 2. Docker compose push (Azure Container Registry)
@@ -226,6 +243,8 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 
     ※第一次Run會有Registry & App Service的Permission Approve
     ![12.png](images/container/12.png)
+
+    ※如需設定YAML Approval，參考[這篇文章](https://www.programmingwithwolfgang.com/deployment-approvals-yaml-pipeline)
 
     ※ Docker Debug資訊參考Diagnose and solve problems (Application Logs→Container Issues)
         ![8.png](images/container/8.png)
@@ -326,10 +345,10 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 用於本機開發，Debug "Call RemoteDriver"的運作狀況
 
 1. 參考Selenium Docker (https://github.com/SeleniumHQ/docker-selenium)
-2. 使用Docker指令安裝特定瀏覽器與版本
+2. 使用Docker指令安裝特定瀏覽器與版本 (-e是environment variables，SE_NODE_MAX_SESSIONS可設定最多平行呼叫的session數量)
 
     ```powershell
-    docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" selenium/standalone-firefox:4.3.0-20220726
+    docker run -d -p 4444:4444 -p 7900:7900 --shm-size="2g" -e SE_NODE_MAX_SESSIONS=1 selenium/standalone-firefox:4.3.0-20220726
     ```
 
     ![2.png](images/container/2.png)
@@ -369,6 +388,8 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
         - '4444:4444'
         - '7900:7900'
         shm_size: 2gb
+        environment:
+        - SE_NODE_MAX_SESSIONS=1
     ```
 
 2. 實際運作須使用docker-compose.yml當中的service name配合port做呼叫
@@ -377,8 +398,27 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
    var driver = new RemoteWebDriver(new Uri("http://selenium_grid:4444/wd/hub"), new FirefoxOptions());
    ```
 
+※ 須注意最多的Session數量限制(SE_NODE_MAX_SESSIONS最多為8)，否則在前面的session結束前，後面的session無法建立成功
+
 ## Nginx
 
 ## IIS
 
 ## SQL Server
+
+
+## References
+
+* [Docker Document](https://docs.docker.com/reference/)
+* [Compose file version 3 reference](https://docs.docker.com/compose/compose-file/compose-file-v3/)
+* [Understanding Docker Port Mappings](https://www.dev-diaries.com/social-posts/docker-port-mappings/)
+* [Docker images for the Selenium Grid Server](https://github.com/SeleniumHQ/docker-selenium)
+* [[Microsoft] How to customize Docker containers in Visual Studio](https://aka.ms/containerfastmode)
+* [[Microsoft] Tutorial: Create a multi-container app with Docker Compose](https://learn.microsoft.com/en-us/visualstudio/containers/tutorial-multicontainer?view=vs-2022)
+* [[Microsoft] Azure Pipelines - Docker Compose task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/build/docker-compose?view=azure-devops)
+* [[黑暗執行緒] ASP.NET Core Docker 筆記 2 - 組合容器建構系統](https://blog.darkthread.net/blog/aspnetcore-docker-notes-2/)
+* [[Neeldeep Roy] CI/CD using Azure DevOps to run Dot Net Core Based Docker Containers](https://medium.com/@neeldeep/ci-cd-using-azure-devops-to-run-dot-net-core-based-docker-containers-c65cc1c9aa4f)
+* [[火車台北火車台北走走] Azure Container Registry](https://ithelp.ithome.com.tw/articles/10208580)
+* [[Microsoft] Push your first image to your Azure container registry using the Docker CLI](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli)
+* [[stackoverflow] Running public & private images on azure web service authentication issue](https://stackoverflow.com/questions/58977249/running-public-private-images-on-azure-web-service-authentication-issue)
+* [Approvals for YAML Pipelines in Azure DevOps](https://www.programmingwithwolfgang.com/deployment-approvals-yaml-pipeline/)

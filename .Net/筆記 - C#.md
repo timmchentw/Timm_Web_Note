@@ -526,6 +526,9 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 
 ### attributes
 
+* 參考[官方文件說明](https://learn.microsoft.com/en-us/dotnet/standard/attributes/retrieving-information-stored-in-attributes)
+
+
 ### CreateInstance
 
 ```C#
@@ -535,7 +538,23 @@ PropertyInfo prop = type.GetProperty(property);
 prop.SetValue(instance, value, null);
 ```
 
-Reference:
+## Generic
+
+### where
+
+規定Generic型別(可多個)
+
+```C#
+public static void GenericMethod<T>()
+  where T : class 
+  where T : enum
+{
+
+}
+```
+
+
+## Reference:
 
 * [小山的教學平台](https://www.youtube.com/channel/UCmumrs_hb9s6eoVI29gLBgA) (建構子、靜態修飾、繼承性)
 * []()

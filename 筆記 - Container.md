@@ -112,10 +112,10 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
     ENTRYPOINT ["dotnet", "MyProject.dll"]
     ```
 
-3. 在該路徑下執行Docker Build，產生image
+3. 在該路徑上一層(.sln所在資料夾)下執行Docker Build，產生image
 
     ```docker
-    docker build -t counter-image -f Dockerfile .
+    docker build -t counter-image -f MyProject/Dockerfile .
     :: counter-image is the name of image
     ```
 
@@ -134,11 +134,11 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 
    ```docker
    # Tag on image
-   docker tag counter-image DOCKER_HUB_USER/counter-image:TAG_NAME
+   docker tag counter-image dockerhub_user/counter-image:tag_name
    # Login to DockerHub
    docker login
    # Push to DockerHub
-   docker push DOCKER_HUB_USER/counter-image
+   docker push dockerhub_user/counter-image:tag_name
    ```
 
 6. 有多個Container同時執行與相依的情況，需額外新增docker-compose.yml

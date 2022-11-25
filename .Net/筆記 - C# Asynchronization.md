@@ -71,6 +71,9 @@ public static async Task WaitAllTasksAndCatchExceptions(Task whenAll)
 }
 ```
 
+## Debug
+
+* 可使用Visual Studio "Parallel Stacks" 功能對不同的stack進行追蹤，方便釐清現在debug處於哪個Task當中
 
 ## 參考資源
 

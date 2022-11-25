@@ -1,3 +1,89 @@
+# Application Insights
+
+## Logger
+
+### Website
+
+### Console App
+
+## Filter (Processor)
+
+* 適用於想過濾特定Telemetry參數的情境
+
+    ```C#
+    public class CustomTelemetryProcessor : ITelemetryProcessor
+    {
+        private readonly ITelemetryProcessor _next;
+
+        public CustomTelemetryProcessor(ITelemetryProcessor next)
+        {
+            this._next = next;
+        }
+
+        public void Process(ITelemetry item)
+        {
+            if (!IsOkToLog(item))
+            {
+                return; // Skip logging
+            }
+
+            this._next.Process(item);
+        }
+
+        private bool IsOkToLog(ITelemetry item)
+        {
+            if (item is RequestTelemetry)
+            {
+                var requestTelemetry = item as RequestTelemetry;
+                if (requestTelemetry.Url.AbsoluteUri.Split('?')[0].EndsWith(".js") ||
+                    requestTelemetry.Url.AbsoluteUri.Split('?')[0].EndsWith(".css") ||
+                    requestTelemetry.Url.AbsoluteUri.Split('?')[0].EndsWith(".ico"))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+    }
+    ```
+
+## Custom Property (Initializer)
+
+* 適用於想加入Custom Property在Log當中
+
+    ```C#
+    public class CustomTelemetryInitializer : ITelemetryInitializer
+    {
+        private readonly Parameters _parameters;
+        private readonly IHostEnvironment _environment;
+
+        // next will point to the next TelemetryProcessor in the chain.
+        public CustomTelemetryInitializer(Parameters parameters, IHostEnvironment environment)
+        {
+            _parameters = parameters;
+            _environment = environment;
+        }
+
+        public void Initialize(ITelemetry telemetry)
+        {
+            // 設定Custom Property
+            if (!telemetry.Context.GlobalProperties.ContainsKey("AppRunningEnviroment"))
+            {
+                telemetry.Context.GlobalProperties.Add("AppRunningEnviroment", _environment.EnvironmentName);
+            }
+
+            if (!telemetry.Context.GlobalProperties.ContainsKey("Application"))
+            {
+                telemetry.Context.GlobalProperties.Add("Application", _parameters.ProgramNamespace);
+            }
+        }
+    }
+    ```
+
+## Custom Request
+
+
 
 ## Ajax紀錄!
 * 可以記錄Request time, ip, crountry, session...

@@ -29,6 +29,12 @@
 
 ## Power Tools
 
+* 自動排序usings、刪除不必要空格、大括號換行等
+* Visual Studio 2019版本直接在Settings當中設定Code Cleanup即可
+![image](./images/VisualStudio/3.png)
+![image](./images/VisualStudio/4.png)
+
+
 ## Test Explorer
 
 ## Task Runner Explorer

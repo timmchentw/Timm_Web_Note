@@ -115,6 +115,7 @@
 | Queue | 佇列 |  |  |
 | Dictionary | 字典 |  |  |
 | Tuple | 雙參數 |||
+| struct | class參數 |  | MyClass.MyProp |
 
 ## 修飾詞
 
@@ -527,6 +528,22 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 ### attributes
 
 * 參考[官方文件說明](https://learn.microsoft.com/en-us/dotnet/standard/attributes/retrieving-information-stored-in-attributes)
+
+```C#
+[System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]  
+public class AuthorAttribute : System.Attribute  
+{  
+    private string name;  
+    public double version;  
+  
+    public AuthorAttribute(string name)  
+    {  
+        this.name = name;  
+        version = 1.0;  
+    }  
+}  
+```
+
 
 
 ### CreateInstance

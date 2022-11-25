@@ -145,7 +145,7 @@
     ```
   
     4-2 **[Builder]** 設定Serilog為預設Logger </br>
-  
+    
     ```C#
     class Program
     {
@@ -169,8 +169,12 @@
         }
     }
     ```
+
+      * Enrich With Property輸入Job namespace與Environment，方便直接篩選
+      ![](images/Hangfire/hangfire8.png)
+      ![](images/Hangfire/17.png)
   
-    4-3 [Builder] 依個人喜好新增Sink管道 (如App Insights, Email, ...)
+    4-3 **[Builder]** 依個人喜好新增Sink管道 (如App Insights, Email, ...)
   
     ```CMD
     dotnet add package Serilog.Sinks.ApplicationInsights
@@ -204,43 +208,113 @@
         }
     }
     ```
-  
-    ![](images/Hangfire/hangfire8.png)
+
+    4.4 **[Builder]** 設定Custom Application Insights Request & Property </br>
+
+    * 這邊與上面的App Insights Custom Property算是同樣功用，但上述僅適用於呼叫"ILogger"時適用，下方的CustomTelemetryInitializer類別則是在App Insights自動進行Log時一併觸發的middleware
+    * 注意ApplicationInsightsTelemetryWorkerService僅適用於Console這種類型的Program
+    * AddApplicationInsightsTelemetryWorkerService後，服務中注入TelemetryClient即可使用 (見下方"5. 建立JobService區塊")
+
+    ```C#
+    // Program.cs
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Host.CreateDefaultBuilder(args)
+                /*...*/
+                .ConfigureServices((hostingContext, services) =>
+                {
+                    // 取得Job Namespace並註冊
+                    string jobNamespace = MethodBase.GetCurrentMethod().DeclaringType.Namespace;
+                    services.AddSingleton<Parameters>(new Parameters() { ProgramNamespace = jobNamespace });
+                    // 自定義App Insights Middleware
+                    services.AddSingleton<ITelemetryInitializer, CustomTelemetryInitializer>();
+                    // Non-Website專案專用的App Insights套件
+                    services.AddApplicationInsightsTelemetryWorkerService(new ApplicationInsightsServiceOptions()
+                    {
+                        InstrumentationKey = loggerInfo.AppInsightsKey,
+                    });
+                });
+        }
+    }
+
+    // CustomTelemetryInitializer
+    public class CustomTelemetryInitializer : ITelemetryInitializer
+    {
+        private readonly Parameters _parameters;
+        private readonly IHostEnvironment _environment;
+
+        // next will point to the next TelemetryProcessor in the chain.
+        public CustomTelemetryInitializer(Parameters parameters, IHostEnvironment environment)
+        {
+            _parameters = parameters;
+            _environment = environment;
+        }
+
+        public void Initialize(ITelemetry telemetry)
+        {
+            // 設定Custom Property
+            if (!telemetry.Context.GlobalProperties.ContainsKey("AppRunningEnviroment"))
+            {
+                telemetry.Context.GlobalProperties.Add("AppRunningEnviroment", _environment.EnvironmentName);
+            }
+
+            if (!telemetry.Context.GlobalProperties.ContainsKey("Application"))
+            {
+                telemetry.Context.GlobalProperties.Add("Application", _parameters.ProgramNamespace);
+            }
+        }
+    }
+    ```
+
+    ![](images/Hangfire/18.png)
+
   
 5. 建立JobService，用於統一對Exception呼叫Logger </br>
-※繼承IHostedService，可在Host Build後直接呼叫Run </br>
-※務必注意IHostApplicationLifetime </br> 與StopApplication()是必要的，讓Console App能在跑完這個service時將Host關閉，否則Console App將因Host持續運作而不會停止 </br>
-※Console App在被執行的時候，Exit Code也會做為是否正常結束的判別，如在不拋出Exception的情況下務必標記使執行端能知道這次執行有出現問題
+  
+   * 繼承IHostedService，可在Host Build後直接呼叫Run </br>
+   * 務必注意IHostApplicationLifetime </br> 與StopApplication()是必要的，讓Console App能在跑完這個service時將Host關閉，否則Console App將因Host持續運作而不會停止 </br>
+   * Console App在被執行的時候，Exit Code也會做為是否正常結束的判別，如在不拋出Exception的情況下務必標記使執行端能知道這次執行有出現問題
+   * TelemetryClient為註冊ApplicationInsightsTelemetryWorkerService後所注入的服務，用於紀錄Custom Operiation (此例使用的是Request Telemetry類別)
 
     ```C#
     public class JobSerive : IHostedService
     {
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _appLifetime;
-    
+        private readonly TelemetryClient _telemetryClient;
+
         private readonly string _executionId;
         private readonly string _jobNamespace;
         private Exception _exception = null;
     
-        public JobSeriveBase(ILogger<JobSeriveBase> logger, IHostApplicationLifetime appLifetime)
+        public JobSeriveBase(ILogger<JobSeriveBase> logger, IHostApplicationLifetime appLifetime, TelemetryClient telemetryClient)
         {
             _logger = logger;
             _appLifetime = appLifetime;
-    
+            _telemetryClient = telemetryClient; // For logging "Custom Request" in app insights
+
             _jobNamespace = GetType().Namespace;    // For distinguish the job
             _executionId = Guid.NewGuid().ToString("N");    // For checking which round
         }
     
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
             try
             {
-                this.ExecuteAsync();
+                _logger.LogInformation($@"Job ""{_jobNamespace}"" Started.");
+                // 將整個Job的運作都納管到App Insights的Log範圍 (可記錄Job Run Duration、Dependency等)
+                using (_telemetryClient.StartOperation<RequestTelemetry>($@"Job Operation of ""{_jobNamespace}"""))
+                {
+                    await this.ExecuteAsync();
+                    _telemetryClient.TrackEvent($@"Job ""{_jobNamespace}"" Completed");
+                }
             }
             catch (Exception ex)
             {
                 _exception = ex;
-                _logger.LogError(ex, $"Job error: {_jobNamespace} ({_executionId})");   // Make sure you have the sink "Console" to identity the error
+                _logger.LogError(ex, $"Job Error: {_jobNamespace} ({_executionId})");   // Make sure you have the sink "Console" to identity the error
             }
             finally
             {
@@ -277,10 +351,11 @@
 
 6. 註冊JobService (相依性注入)
 7. 執行Host & Service </br>
-※ 註冊JobService務必要使用".AddHostedService()"方法， </br>
-該方法是為了能夠讓IHost.Run()的時候能執行Service Instance </br>
-※ ".UseConsoleLifetime()"是必須的，原因是ㄧ些暫存資源可能會保留住等一次性釋出(如Application Insights)，該方法可在Host結束的時候強制釋出資源，可避免如Log內容遺失等情況 </br>
-※ ".RunAsync()"方法會忽略掉Hosted servcie exception，務必注意
+  
+   * 註冊JobService務必要使用".AddHostedService()"方法， </br>
+   該方法是為了能夠讓IHost.Run()的時候能執行Service Instance </br>
+   * ".UseConsoleLifetime()"是必須的，原因是ㄧ些暫存資源可能會保留住等一次性釋出(如Application Insights)，該方法可在Host結束的時候強制釋出資源，可避免如Log內容遺失等情況 </br>
+   * ".RunAsync()"方法會忽略掉Hosted servcie exception，務必注意
 
     ```C#
     class Program
@@ -307,10 +382,6 @@
 * 有跨Framework的需求時，可使用.net standard 2.0作為Shared Library的版本 (對應.net Core 2.1 & .net Framework 4.7.2)
 * 注意部分功能在.Net framework需要手動跟Shared Library安裝一樣的Nuget Package，否則會在Build or Runtime時發生錯誤
 * 注意Generic Host RunAsync方法並不會拋出Exception而繼續執行到結束的狀況 (即Console App即使有做到Log Exception，但結果上還是顯示安全地執行結束)，這時候務必搭配ExitCode=0來做標記 (第7步)
-
-#### 可優化內容
-
-* 整合Azure Application Insights，利於分析Job運作效能 (延伸應用: ApplicationInsightsWorkerService套件)
 
 #### 相關資源
 

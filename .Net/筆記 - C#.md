@@ -114,8 +114,10 @@
 | Stack | 堆疊 |  |  |
 | Queue | 佇列 |  |  |
 | Dictionary | 字典 |  |  |
-| Tuple | 雙參數 |||
+| Tuple | 多參數 |||
 | struct | class參數 |  | MyClass.MyProp |
+| Enum |  |  |  |
+| NameValueCollection |  |  |  |
 
 ## 修飾詞
 
@@ -334,6 +336,20 @@ finally
 }
 ```
 
+### IS
+
+用於判斷型別 (可在後面直接命名轉型物件)
+
+```C#
+if (exception is ArgumentException argEx)
+{
+  Console.WriteLine(argEx.Message);
+  // ...
+  // 等於
+  // ArgumentException argEx = exception as ArgumentException 
+}
+```
+
 ### HTML處理
 
 #### HtmlAgilityPack
@@ -365,9 +381,9 @@ node2.ParentNode.InsertBefore(node1);  // 選定節點並插入子節點 (Insert
 
 ```C#
 StreamReader sr = new StreamReader(filepath, Encoding.UTF8);   // Read HTML file
-            string myString = sr.ReadToEnd();
-            sr.Close();
-            sr.Dispose();
+string myString = sr.ReadToEnd();
+sr.Close();
+sr.Dispose();
 // 寫入則為：sw.Write(myString)，其他宣告與指令相同
 ```
 
@@ -376,7 +392,7 @@ StreamReader sr = new StreamReader(filepath, Encoding.UTF8);   // Read HTML file
 ## 注意事項
 
 * 使用WebClient載入https連結時，如.net framework版本較舊、憑證版本較新，須先預設較新版本的SSL/TLS憑證
-* 
+
 ```C#
 System.Net.ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls12;  // 定義TLS1.2版本
 
@@ -486,6 +502,26 @@ public IEnumerable<string> Sample()
 
 ### Partial Class
 
+## Lock
+
+* 鎖定某個物件，使得其他執行緒在lock語法結束前不能做更改
+* 如要Lock現有的Class，則可直接建立一個無意義的Object property，避免當下執行緒卡死
+
+  ```C#
+  public class ClassToBeLocked
+  {
+      private static object _lockObj { get; set; }
+      
+      public void DoSomething()
+      {
+        lock (_lockObj)
+        {
+          //...
+        }
+      }
+  }
+  ```
+
 ## 網址與路徑
 
 ### Path
@@ -494,6 +530,20 @@ public IEnumerable<string> Sample()
     Path.Combine("directory/root/", "/relativePath/file");
     Path.GetFileName("fullpath");
     Path.GetExtension("fullpath");
+  ```
+
+### Directory & File
+
+  ```C#
+    File.Exists("FilePath");
+    File.Delete("FilePath");
+    var fileInfo = new FileInfo("FilePath")
+
+    Directory.CreateDirectory("DirectoryPath")
+    Directory.Exists("DirectoryPath");
+    Directory.Delete("DirectoryPath", recursive: true);
+    var directoryInfo = new DirectoryInfo("DirectoryPath");
+
   ```
 
 ## Stream
@@ -508,7 +558,9 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 
 ### Expression-bodied Methods
 
-    MyFunction(int a, int b) =>a + b;
+  ```C#
+  MyFunction(int a, int b) => a + b;
+  ```
 
 #### Expression-bodied members
 
@@ -525,26 +577,47 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 
 ### typeof
 
-### attributes
+* typeof()
+* .GetType() 
+* Nullable.GetUnderlyingType(type)
+
+### Property
+
+* typeof(T).GetProperties()
+
+
+### Change type
+
+* 泛型取得PropertyInfo，再偵測Property型別，轉換成目標型別，設定到該Property上
+
+  ```C#
+  TClass result = new TClass();
+  object stringData = "123";
+  PropertyInfo prop = typeof(TClass).GetProperties[0];
+  Type propType = prop.PropertyType.Name.Contains("Nullable") ?
+              Nullable.GetUnderlyingType(prop.PropertyType)! : prop.PropertyType;  // Allow to convert to nullable type
+  prop.SetValue(result, Convert.ChangeType(stringData, propType));
+  ```
+
+
+### Attributes
 
 * 參考[官方文件說明](https://learn.microsoft.com/en-us/dotnet/standard/attributes/retrieving-information-stored-in-attributes)
 
-```C#
-[System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]  
-public class AuthorAttribute : System.Attribute  
-{  
-    private string name;  
-    public double version;  
-  
-    public AuthorAttribute(string name)  
-    {  
-        this.name = name;  
-        version = 1.0;  
-    }  
-}  
-```
-
-
+  ```C#
+  [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]  
+  public class AuthorAttribute : System.Attribute  
+  {  
+      private string name;  
+      public double version;  
+    
+      public AuthorAttribute(string name)  
+      {  
+          this.name = name;  
+          version = 1.0;  
+      }  
+  }  
+  ```
 
 ### CreateInstance
 
@@ -569,6 +642,22 @@ public static void GenericMethod<T>()
 
 }
 ```
+
+## Assembly
+
+* 取得Assembly file
+  
+  ```C#
+  Assembly.GetExecutingAssembly().Location;
+  ```
+
+* 取得Assembly 資料夾路徑
+  
+  ```C#
+  Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+  ```
+  
+
 
 
 ## Reference:

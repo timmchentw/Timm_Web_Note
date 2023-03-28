@@ -287,6 +287,39 @@ DROP TABLE OldTableName
 TRUNCATE TABLE OldTableName
 ```
 
+### Stored Procedure
+
+可於SSMS查看與自動產生SP建立SQL
+![image](./images/sql/2.png)
+
+* Create/Alter SP
+
+```SQL
+CREATE PROCEDURE SP_SAMPLE
+	-- Add the parameters for the stored procedure here
+  @PAR1 int,
+  @PAR2 nvarchar(100)
+AS
+BEGIN
+	-- SET NOCOUNT ON added to prevent extra result sets from
+	-- interfering with SELECT statements.
+	SET NOCOUNT ON;
+
+    -- Insert statements for procedure here
+	SELECT @PAR1, @PAR2
+END
+GO
+
+```
+
+* Run SP
+  * 參數用,分隔
+  * 結束指令需加入符號;
+
+```SQL
+EXEC SP_SAMPLE 1, 'Inputs';
+```
+
  <br> <br>
 ## 技巧
 ### WITH
@@ -506,6 +539,15 @@ group by t.Gender
     ```
 
 * Monitor
+* 
+
+## 效能
+
+* Index
+  * 參考順序性與建立要訣: [黑大文章](https://blog.darkthread.net/blog/index-key-for-or-condition/)
+
+* EXPLAIN
+  * 幫助了解Index是否有Hit到
 * 
 
 

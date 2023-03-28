@@ -1,4 +1,4 @@
-# ASP.net MVC 5
+# .net MVC
 
 ## Action
 
@@ -58,6 +58,11 @@ public ActionResult MyAction(myViewModel model)
 ```javascript
 data: JSON.stringify({ Model: model })
 ```
+
+## TempData
+
+* 用於跨Controller Action & View的資料傳遞
+
 
 ## LINQ ENumerable
 
@@ -206,9 +211,34 @@ var myExceptResult = myList.AsEnumerable().Except(myExcept, new MyComparer())   
 </configuration>
 ```
 
-## Entity Framework 6
-
 ## Authentication
+
+## Model Validation 後端驗證
+
+### Attributes
+
+* `Required`
+* `EmailAddress`
+* `RegularExpression("...". ErrorMessage = "...")`
+
+### System.Web.Mvc.ModelState
+
+* ModelState.IsValid
+* ModelState.Select(x => x.Value.Errors)
+
+```C#
+var validateErrors = ModelState.Select(x => x.Value.Errors).Where(y => y.Count > 0).ToList();
+string errorMsg = String.Join("; ", validateErrors.Select(x =>
+{
+    string validateMsg = x.FirstOrDefault().ErrorMessage;
+    if (String.IsNullOrEmpty(validateMsg))
+    {
+        validateMsg = x.FirstOrDefault().Exception.Message;
+    }
+    return validateMsg;
+}));
+return errorMsg;
+```
 
 ## Dependency Injection
 

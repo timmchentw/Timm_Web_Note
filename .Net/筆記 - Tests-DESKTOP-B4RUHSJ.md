@@ -2,8 +2,6 @@
 
 ## MSTest (V2)
 
-* 當測試Case Input沒有可顯示的型別做辨別，則Test Explorer不會跳出Cases
-
 ### Lifecycle
 
 * ClassInitialize (Static)
@@ -97,6 +95,7 @@ public class MyTests
 ### DI註冊 (參考[黑大文章](https://blog.darkthread.net/blog/aspnetcore-efcore-unitest/))
 
 ```C#
+```C#
 [TestClass]
 public class MyTests
 {
@@ -123,112 +122,3 @@ public class MyTests
 }
 ```
 
-### Mock
-
-#### Methods
-
-* Setup
-  * CallBack
-* It.IsAny
-* Verify
-
-
-```C#
-services.AddScoped<IMyService>((services) => 
-{
-    var mockService = new Mock<IMyService>();
-    moqService.Setup(x => x.GetBoolResult().Returns(true));  // 同步方法
-    moqService.Setup(x => x.GetBoolResultAsync().Returns(Task.FromResult(true));  // 非同步方法
-    moqService.Setup(x => x.GetStringResult(It.IsAny<string>()).Returns("..."));  // 有Input的Function
-    return moqService.Object;
-});
-```
-
-#### Partial Mock
-
-可將Instance進行Mock，使部分Function回傳指定結果
-
-* Mock Implement Class
-* As 目標Interface
-* CallBase必須為True
-* 目標方法套用Virtual修飾
-
-```C#
-// Startup.cs
-services.AddScoped<IBasicService, BasicService>();
-services.AddScoped<IMyService>((services) => 
-{
-    var realService = new Mock<MyService>(services.GetRequiredService<IBasicService>());    // 遵照Constructor
-    var moqService = realService.As<IMyService>();  // 轉成目標Interface
-    moqService.Setup(x => x.CanGetData().Returns(true));    // Mock其中一個Function
-    moqService.CallBase = true; // 開啟才能Call base class
-    return moqService.Object;
-});
-
-// MyService.cs
-public class MyService : IMyService
-{
-    private IBasicService _basicService
-    public MyService(IBasicService basicService)
-    {
-        _basicService = basicService;
-    }
-    public virtual Task<bool> CanGetData()
-    {
-        // 必須使用virtual才能讓Mock Override
-        return false;
-    }
-}
-
-```
-
-#### Mock Logger
-
-* Mock目標Class的ILogger
-* 使用Verify驗證Function被呼叫的次數、內容等
-
-```C#
- [TestClass]
-public class Tests
-{
-    [TestMethod]
-    public async Task MockLoggerTest()
-    {
-        Mock<ILogger<MyService>> mockLogger = new Mock<ILogger<MyService>>();
-        var service = new MyService(mockLogger.Object);
-        
-        service.Run();
-
-        mockLogger.Verify(x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                //It.Is<It.IsAnyType>((o, t) => string.Equals("Index page say hello", o.ToString(), StringComparison.InvariantCultureIgnoreCase)),  // 可比較輸入內容
-                It.Is<It.IsAnyType>((o, t) => true),    // 所有內容都接受
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Never);   //可設定檢查被觸發幾次
-    }
-}
-
-// MyService.cs
-public class MyService
-{
-    private ILogger<MyService> _logger;
-
-    public MyService(ILogger<MyService> logger)
-    {
-        _logger = logger;
-    }
-
-    public void Run()
-    {
-        _logger.LogError("Some error message");
-    }
-}
-```
-
-#### Mock DbContext (Entity Framework)
-
-```C#
-
-```

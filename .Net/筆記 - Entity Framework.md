@@ -99,12 +99,48 @@ public partial class Role
 ```
 
 * Eager, Lazy, Implicit Load
+  * Lazy (Deferred): 每次有需要再取得資料
+  
+    ```C#
+    # Users參數必須是Virtual才能套用Lazy Loading
+    var users = dbContext.Users;
+    var targets = users.First().Role;
+    ```
+
+  * Eager: 一次取得所需關聯物件 (Include)
+  
+    ```C#
+    var usersWithRole = dbContext.Users.Include(user => user.Role).First();
+    ```
+
+  * Implicit: 
+  
+    ```C#
+
+    ```
+
 
 * Fluent API
 * Data Annotations
 
 * Value Conversions - to convert the enum to int when reading/writing to db
-* [Data Seeding](https://docs.microsoft.com/en-us/ef/core/modeling/data-seeding) - to add the enum values in the db, in a migration
+* [Data Seeding](https://docs.microsoft.com/en-us/ef/core/modeling/data-seeding) - to add the enum values in the db, in a migration </br>
+在DbContext檔案中定義預設Rows Data，適合如LOV、Mapping表等少改且需要作為Enum的Table
+
+* 連動表 (Foreign Key Linked)
+
+* AsQueryable </br>
+  一般Select DB Repo返回的物件，屬於Lazy Loading，只要在ToList, First, Count...等執行指令時才會跑
+  * 如果在Where條件中加入外部Function，會因為Linq to sql無法翻譯，而出現失效的狀況
+* AsNoTracking </br>
+  取得即時的資料
+
+* Find </br>
+  從Local DbContext取得資料，如果沒有才會去Query DB，類似Cache機制 (注意使用上可能會有Join Property為Null的情況)
+
+   
+* Id </br>
+  設定Int Property為"Id"，EF Core將自動建立PK、Identity (流水號)
 
 ## Database First
 

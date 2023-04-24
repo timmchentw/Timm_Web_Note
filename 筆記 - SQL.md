@@ -159,7 +159,8 @@ WHERE (Col1 = 123 OR Col1 like '%123_')   /* like可搜尋字串contains、%代�
       AND Col1 is not null                /* is null */
       
 WHERE Col1 in ('con1', 'con2')            /* 過濾多條件 */
-WHERE Col1 i (SELECT...)                  /* 也可以用SELECT後的rows直接套進去多條件 */
+WHERE Col1 in (SELECT...)                 /* 也可以用SELECT後的rows直接套進去多條件 */
+WHERE EXISTS (SELECT * FROM ... b WHERE a.Col1 = b.Id) /* EXISTS效能較In Select好 */
 WHERE Col2 BETWEEN 0 AND 100              /* between兩值之間 */
 WHERE Col3 like N'%某非英文條件%'           /* 尋找相似字詞，N代表unicode(可存取非英文字元)、%代表任意值 */
 WHERE LEFT(Col3, 3) <> '123'              /* 字串左3個"不等於"123 */ 

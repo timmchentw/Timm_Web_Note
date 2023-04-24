@@ -36,6 +36,27 @@
 * 可儲存密碼文字
 * 可上傳Certificate檔案
 * 可設定Enabled, 起始 & 失效時間
+* 巢狀結構：使用`--`分隔，如`ConnectionStrings--LocalDb` (相當於appsettings.json的`{"ConnectionStrings": {"LocalDb" : "..."}}`)
+
+### 讀取方法
+
+```C#
+using Azure.Identity;
+using Microsoft.Extensions.Configuration;
+
+var kvUri = $"https://{keyVaultName}.vault.azure.net";
+
+var configuration = new ConfigurationBuilder()
+                .AddAzureKeyVault(new Uri(kvUri), new DefaultAzureCredential())
+                .Build();
+
+var config = configuration
+                .GetSection(nameof(AppConfig))
+                .Get<AppConfig>();
+```
+
+※務必先安裝套件`Azure.Extensions.AspNetCore.Configuration.Secrets`
+※強型別IConfigurationSection.Get方法須安裝套件`Microsoft.Extensions.Configuration.Binder`
 
 ## Key
 

@@ -225,7 +225,7 @@
 
 * ### CsvHelper
 
-  * 使用強型別方式讀取CSV檔案
+  * 使用強型別方式輸出/讀取CSV檔案
   * 注意Encoding
 
     ```C#
@@ -307,6 +307,17 @@
         }
     }
     ```
+
+* 寫入
+
+    ```C#
+    using (var writer = new StreamWriter(filePath, append: true, encoding: Encoding.UTF8))
+    using (var csv = new CsvWriter(writer, CultureInfo.CurrentCulture))
+    {
+        csv.WriteRecords(listData);
+    }
+    ```
+
 
 ## Web
 

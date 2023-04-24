@@ -135,6 +135,20 @@
 * `async` 非同步方法，務必在方法內包含至少一個await (async method可呼叫sync method，反之無法，因此建議code都使用async方法為呼叫源頭)
 * `abstract`抽象方法(不可實作)、`virtual`(可複寫方法)、`override`(已覆寫方法)
 
+## Property與Field
+
+* Field: 為Class變數，通常為Private
+
+  ```C#
+  private string _something;
+  ```
+
+* Property: 封裝Field或其他數據，有get/set accessor，簡化操作Field的方法
+
+  ```C#
+  public string Something { get;set; }
+  ```
+
 ## 建構子 Contructor
 
 1. 無output，可input (有即強迫使用者輸入input)
@@ -253,27 +267,55 @@ class B : A         //B繼承A之屬性(內建變數、Function等)
 `if (!var)` → `if(int==0)` or `if(string==null)`  <br>
 !代表相反之涵義
 
-### **?: ??**
+### **Null Operator**
 
-* ?: 簡化條件式為單行
+* `? :` 簡化條件式為單行
 
 ```C#
-int a = b > 0 ? b : c;
 // 宣告a整數值，當b>0時則a=b，否則為a=c
+int a = (b > 0) ? b : c;
+// 原始如下:
+int a;
+if (b > 0)
+  a = b; 
+else
+  a = c;
 ```
 
-* ?? 簡化檢查null值
+* `?.` 允許取得Null Property (Null Condition Operator)
 
 ```C#
-int a = b ?? c ?? d;
-// 宣告a整數值，當b為非null時a=b；當b為null時a=c；當c為null時a=d...
-```
-
-* ?.: Null Operator
-
-```C#
-string value = myClass?.Value;
 // 允許取得Null instance的Property (會返回null)
+string val = myClass?.Value;
+// 原始如下:
+string val = null;
+if (myClass != null)
+  val = myClass.Value;
+```
+
+* `??` 簡化檢查null值 (null-coalescing)
+
+```C#
+// 宣告a整數值，當b為非null時a=b；當b為null時a=c；當c為null時a=d...
+int a = b ?? c ?? d;
+// 原始如下:
+int a = b;
+if (b == null)
+  a = c;
+if (c == null)
+  a = d;
+```
+
+* `??=` 簡化Null Set Value (null-coalescing assignment)
+
+```C#
+string val = null;
+string val2 = val ??= "default";
+// 原始如下:
+string val = null;
+if (val == null)
+  val = "default";
+string val2 = val;
 ```
 
 ### **SWITCH**

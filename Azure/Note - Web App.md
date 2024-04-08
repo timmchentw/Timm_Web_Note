@@ -3,6 +3,23 @@
 ### [Environment Variables]
 ![1.png](images/web_app/1.png "")
 
+* 新增Resource後必填：
+  * ASPNETCORE_ENVIRONMENT (Production, Staging)
+  * WEBSITE_TIME_ZONE (Linux: "Asia/Taipei")
+* 選填：
+  * Container Registry參數 (Start web app時需要直接pull image)
+    ![image](images/web_app/10.png "")
+
+  * Key Vault參數 (Start web app時需要取得config) → 使用Service connector可自動幫忙增改(注意Key要修改成AZURE_XXX，否則Azure.Identity套件會抓不到)
+    ![image](images/web_app/7.png "")
+
+### General Settings
+
+* Always on: 沒有Request時仍然開著 (適合job站台)
+* HTTPS Only: 預設開啟
+![image](images/web_app/6.png "")
+
+
 ### [Diagnose]
 
 可根據Azure建議的方式變更安全性與穩定性設定
@@ -19,3 +36,11 @@
 
 ### [Deployment Slots]
 
+## 外部綁定
+### Front Door
+* Origin綁定Web App以將Request導流過來
+![image](images/web_app/8.png "")
+
+## Azure Pipelines
+* Deployment綁定Web App
+![image](images/web_app/9.png "")

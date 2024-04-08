@@ -1,0 +1,12 @@
+# 網路通訊
+
+## DNS
+
+|Type|說明|Example|
+|--|--|--|
+|A (Address)|指定主機IP|域名. A IP </br> `mc.example.com. A XXX.XXX.XXX.XXX`|
+|CNAME (Canonical Name)|用於指定Domain到另一個真實Domain，減少主機IP更改的改動範圍，也適合多個Sub domain存在同一個主機的情境|域名. CNAME 真實域名 </br> `two.example.com. CNAME mc.example.com`|
+|TXT (Text)|適用各種文字，作為註記或驗證所用，如Email會使用DKIM,SPF或DMARC等方式驗證Domain是否合法|域名. TXT Text </br> `mc.example.com. TXT AnythingYouWantToType`|
+|MX (Mail Exchanger)|搭配A Record所使用，通常做為SMTP協定驗證所用|域名(全部). MX 優先级 主機域名. </br> `@. MX 10 mailhost.example.com.` </br> 此例mailhost.example.com必新增A指定主機IP|
+|SRV (Service)|搭配A Record所使用，允許指定Port，也可以優先級定義Load balancer| _服務._協議.域名. TTL 類別 SRV 優先级 權重 連接埠 主機域名. </br> `_minecraft._tcp.example.com. 86400 IN SRV 0 5 25565 mc.example.com.` </br> 此例mc.example.com必新增A指定主機IP |
+|NS (Name Server)|名稱伺服器，為指定的DNS伺服器名稱，可有多個做為備援|域名(全部). NS 主機域名 TTL. </br> `@. NS ns1.example.com 21600.` </br> 此例ns1.example.com不可為IP位址||

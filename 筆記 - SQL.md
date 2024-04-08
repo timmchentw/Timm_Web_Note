@@ -78,6 +78,9 @@ FROM [DataBase] AS a
 /* nolock防止SQL表鎖住(WITH可略) */
 -- 僅限SELECT使用，可提升讀取速度、防止其他寫入行為失敗，但可能讀取到transaction即時更新的未完整資料
 FROM [DataBase] AS a WITH (nolock)
+
+/* Text作為來源 */
+FROM (VALUES (1, 'John'), (2, 'Mary')) AS a (Id, Name)
 ```
 
 ### JOIN
@@ -448,7 +451,7 @@ ON DELETE CASCADE;    --連動刪除
 GO
 ```
 
-※ 設定Update/Delete "cascade"可連動更新關聯的表! (須從源頭表更新，注意reference衝突時會無法設定)
+※ 設定Update/Delete "cascade"可連動更新關聯的表! (須從源頭表更新，注意reference衝突時會無法設定)</br>
 ![1.png](images/sql/1.png "")
 
 ### UNIQUE 不重複欄位
@@ -539,8 +542,57 @@ group by t.Gender
     spwho2
     ```
 
-* Monitor
-* 
+* Activity Monitor
+* sys.dm_exec_sessions
+* sys.dm_exec_session_wait_stats
+  * [[SQL SERVER]SQL2016-取得個別session等待統計資料](https://dotblogs.com.tw/ricochen/2016/12/03/085106)
+
+  ```SQL
+  SELECT  sql_handle, *
+  FROM    sys.dm_exec_session_wait_stats a
+  LEFT JOIN sys.dm_exec_sessions b on a.session_id = b.session_id
+  LEFT JOIN sys.dm_exec_requests c on a.session_id = c.session_id
+  CROSS APPLY sys.dm_exec_sql_text (c.plan_handle) d 
+  --CROSS APPLY sys.dm_exec_sql_text (c.sql_handle) d 
+  WHERE b.login_name like '%...%'
+  ORDER BY wait_time_ms DESC
+  ```
+
+* 容量查詢 (用於查詢DB容量塞爆問題)
+  * 整個DB容量 `sp_spaceused`
+  * 每張表使用量
+  
+  ```SQL
+  WITH CAL AS (
+    SELECT 
+        s.Name AS SchemaName,
+        t.NAME AS TableName,
+        p.rows AS RowCounts,
+        SUM(a.total_pages) * 8 AS TotalSpaceKB, 
+        SUM(a.used_pages) * 8 AS UsedSpaceKB, 
+        (SUM(a.total_pages) - SUM(a.used_pages)) * 8 AS UnusedSpaceKB
+    FROM 
+        sys.tables t
+    INNER JOIN 
+        sys.schemas s ON s.schema_id = t.schema_id
+    INNER JOIN      
+        sys.indexes i ON t.OBJECT_ID = i.object_id
+    INNER JOIN 
+        sys.partitions p ON i.object_id = p.OBJECT_ID AND i.index_id = p.index_id
+    INNER JOIN 
+        sys.allocation_units a ON p.partition_id = a.container_id
+    WHERE 
+        t.NAME NOT LIKE 'dt%'    -- filter out system tables for diagramming
+        AND t.is_ms_shipped = 0
+        AND i.OBJECT_ID > 255 
+    GROUP BY 
+        t.Name, s.Name, p.Rows
+    )
+    SELECT *, CASE WHEN TotalSpaceKB = 0 THEN 0 ELSE (CAST(UsedSpaceKB AS decimal(20, 2))/TotalSpaceKB*100.0) END AS UsedPercent
+    FROM CAL
+    ORDER BY UsedSpaceKB DESC
+  ```
+
 
 ## 效能
 
@@ -570,4 +622,73 @@ group by t.Gender
 
 ### 規範:
 1. `SELECT name, type, type_desc FROM sys.objects` 可搜尋DB物件縮寫進行命名規範 <br>
-2. 
+
+
+## 筆記
+
+### Tables
+
+* 列出View Reference Tables
+
+參考[來源](https://stackoverflow.com/questions/7166034/list-of-views-referencing-a-table)
+
+```SQL
+SELECT 
+referencing_object_name = o.name, 
+referencing_object_type_desc = o.type_desc, 
+referenced_object_name = referenced_entity_name, 
+referenced_object_type_desc = o1.type_desc 
+FROM sys.sql_expression_dependencies sed 
+INNER JOIN sys.objects o 
+ON sed.referencing_id = o.[object_id] 
+LEFT OUTER JOIN sys.objects o1 
+ON sed.referenced_id = o1.[object_id] 
+WHERE o.name like '%YOUR_TABLE_NAME%'
+```
+
+* 列出所有Table
+
+```SQL
+Use DATABASE_NAME
+SELECT TABLE_NAME, TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES a -- WHERE TABLE_TYPE = 'BASE TABLE'
+ORDER BY TABLE_TYPE, TABLE_NAME
+```
+
+### Collation 資料庫定序
+
+* 列出所有DB的Collation
+
+```SQL
+SELECT name, collation_name FROM sys.databases
+
+```
+
+* 列出所有Table & Column的Collation
+
+```SQL
+SELECT 'ALTER TABLE' AS 'Alter Table',
+  t.Name 'Table Name', 
+  'ALTER COLUMN' AS 'Alter Column',
+  c.name 'Column Name',
+  i.DATA_TYPE + CASE WHEN (i.CHARACTER_MAXIMUM_LENGTH is null) THEN ('')　
+	  WHEN (i.CHARACTER_MAXIMUM_LENGTH = -1) THEN ('(MAX)')
+	  ELSE ('(' + CAST(i.CHARACTER_MAXIMUM_LENGTH as nvarchar) + ')') END 'Data Type',
+  'COLLATE DATABASE_DEFAULT' AS 'Alter to default collation',
+  CASE WHEN (i.IS_NULLABLE = 'YES') THEN ('NULL') ELSE ('NOT NULL') END AS 'Nullable',
+  c.collation_name 'Original Column Collation'
+FROM sys.columns c
+INNER JOIN sys.tables t ON c.object_id = t.object_id
+LEFT JOIN INFORMATION_SCHEMA.COLUMNS i ON t.name = i.TABLE_NAME AND c.name = i.COLUMN_NAME
+WHERE t.is_ms_shipped = 0
+ORDER BY c.collation_name
+```
+
+* 更改特定Table Column的Collation
+
+```SQL
+-- 更改回DB預設
+ALTER TABLE [dbo].[TABLE_NAME] ALTER COLUMN <COLUMN_NAME> <COL_TYPE> COLLATE DATABASE_DEFAULT
+
+--更改至任意Collation
+ALTER TABLE [dbo].[TABLE_NAME] ALTER COLUMN <COLUMN_NAME> <COL_TYPE> COLLATE <TARGET_COLLATION>
+```

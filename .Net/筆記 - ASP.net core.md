@@ -161,7 +161,159 @@ public class MyAuthorizeAttribute : Attribute, IAuthorizationFilter
 
 #### Get
 
+## Frontend
+
+### Tag Helper
+
+- 可設定類似HTML Tag的自定義Element，產生HTML & JS Text
+- 設定方式
+  - 建立Class, Implement TagHelper & Attribute HtmlTargetElement
+- 優點:
+  - 強型別物件，方便追蹤
+  - 有後端驗證
+  - 前後端整合
+- 缺點:
+  - 部分設定不全，前端工具支援度受限(需要理解整個前端套件的設定)
+  - 動態功能支援性受限(Razor只渲染一次)
+  - 有時候設定上或可讀性較不直覺
+  - 前後端職責混和
+- 與前端架構使用: 視情況與習慣使用
+- 範例
+
+    ```C#
+    // backend
+    using Microsoft.AspNetCore.Razor.TagHelpers;
+
+    [HtmlTargetElement("email")]
+    public class EmailTagHelper : TagHelper
+    {
+        public string Address { get; set; }
+        public string Display { get; set; }
+
+        public override void Process(TagHelperContext context, TagHelperOutput output)
+        {
+            output.TagName = "a"; // 更改tag為<a>
+            output.Attributes.SetAttribute("href", $"mailto:{Address}");
+            output.Content.SetContent(Display);
+        }
+    }
+    ```
+
+    ```HTML
+    <!--.cshtml-->
+    @addTagHelper *, YourNamespace
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+        <title>Email Tag Helper Example</title>
+    </head>
+    <body>
+        <h1>Email Tag Helper Example</h1>
+
+        <email address="john@example.com" display="Email John"></email>
+    </body>
+    </html>
+    ```
+
+  - 輸出結果範例
+
+    ```HTML
+    <a href="mailto:john@example.com">Email John</a>
+    ```
 
 ## Deployment
 
 ### Linux
+
+## 傳輸協定
+
+### gRPC
+
+1. 建立 gRPC 服務和客戶端
+    1. 步驟一：建立 gRPC 服務
+    開啟 Visual Studio 2022，選擇 新建專案。
+    搜尋 gRPC，選擇 ASP.NET Core gRPC 服務，然後點擊 下一步。
+    在 配置新專案 對話框中，輸入專案名稱（例如 GrpcGreeter），選擇 .NET 8.0 (Long Term Support)，然 後點擊 建立。
+    在 Additional information 對話框中，選擇 Create。
+    2. 步驟二：編輯 proto 文件
+    在專案中，找到 Protos/greet.proto 文件。
+    編輯 greet.proto 文件以定義 gRPC 服務和消息。
+
+    ```C#
+    syntax = "proto3";
+
+    option csharp_namespace = "GrpcGreeter";
+
+    package greet;
+
+    // The greeting service definition.
+    service Greeter {
+    // Sends a greeting
+    rpc SayHello (HelloRequest) returns (HelloReply);
+    }
+
+    // The request message containing the user's name.
+    message HelloRequest {
+    string name = 1;
+    }
+
+    // The response message containing the greetings
+    message HelloReply {
+    string message = 1;
+    }
+
+    ```
+
+   3. 步驟三：實現 gRPC 服務
+   在 Services 文件夾中，創建 GreeterService.cs 文件。
+   實現 GreeterService 類：
+    (Build後會自動生成Model檔案-HelloRequest)
+
+    ```C#
+    using Grpc.Core;
+    using GrpcGreeter;
+
+    public class GreeterService : Greeter.GreeterBase
+    {
+        private readonly ILogger<GreeterService> _logger;
+        public GreeterService(ILogger<GreeterService> logger)
+        {
+            _logger = logger;
+        }
+
+        public override Task<HelloReply> SayHello(HelloRequest request, ServerCallContext context)
+        {
+            return Task.FromResult(new HelloReply
+            {
+                Message = "Hello " + request.Name
+            });
+        }
+    }
+    ```
+
+2. 建立 gRPC 客戶端
+   1. 步驟一：建立新的 .NET Console 應用程式
+   在 Visual Studio 中，建立新的 .NET Console 應用程式。
+   添加 Grpc.Net.Client 和 Google.Protobuf NuGet 套件。
+   2. 步驟二：編寫客戶端代碼
+   在 Program.cs 文件中，編寫以下代碼：
+
+   ```C#
+   using Grpc.Net.Client;
+   using GrpcGreeter;
+   using System.Threading.Tasks;
+
+   class Program
+   {
+       static async Task Main(string[] args)
+       {
+           // The port number must match the port of the gRPC server.
+           using var channel = GrpcChannel.ForAddress("https://localhost:5001");
+           var client = new Greeter.GreeterClient(channel);
+           var reply = await client.SayHelloAsync(new HelloRequest { Name = "World" });
+           Console.WriteLine("Greeting: " + reply.Message);
+       }
+   }
+   ```

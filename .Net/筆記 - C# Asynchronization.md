@@ -46,6 +46,8 @@ public void MyFunction()
 ```
 
 * Exception處理:</br> 當非同步執行時，Exception建議調用每個Task的Exception一次性Throw，對於Log Error來說會較為完整
+  * [2 ways to handle exception with c#’s Task.WhenAll
+](https://amanparihar16.medium.com/2-ways-to-handle-exception-with-c-s-task-whenall-c0e5e0169ae0)
   
 ```C#
 public static async Task WaitAllTasksAndCatchExceptions(Task whenAll)
@@ -68,6 +70,23 @@ public static async Task WaitAllTasksAndCatchExceptions(Task whenAll)
         }
         throw new Exception(allExceptions);
     }
+}
+```
+
+```C#
+// 最簡略的寫法
+private Task<bool> TryWhenAll(params Task<IEnumerable<UserSearchItemDto>>[] tasks)
+{
+    return Task.WhenAll(tasks)
+                .ContinueWith(x =>
+                {
+                    foreach (Exception ex in x.Exception?.InnerExceptions)
+                    {
+                        logger.LogError(ex, ex.Message);
+                    }
+
+                    return x.Status == TaskStatus.RanToCompletion;
+                });
 }
 ```
 

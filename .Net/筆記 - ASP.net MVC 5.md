@@ -2,6 +2,8 @@
 
 ## Action
 
+* 注意Controller & Action Route的部分，最好預先設定好 (比如`[Route("...")]`)
+
 ### GET (讀入網頁、回傳預設數值)
 ```C#
 using MyProj.Models.viewmodel;  // 引入viewmodel目錄
@@ -68,29 +70,47 @@ data: JSON.stringify({ Model: model })
 
 ### 資料處理指令
 * Concat 合併
+
 ```C#
 A.Concat(B) // A與B之Row合併
 ```
+
 * Select
+
 ```C#
 A.Select(x => x.num) // 選定num行、或改名及前處理 (ex. ToString())，相當於SQL的select ...
 ```
+
+* SelectMany
+
+```C#
+A.SelectMany(x => x.listProperty) // 將List的某Property攤平成一個List，相當於SQL的union
+```
+
 * Take
+
 ```C#
 A.Take(50) // 只取TOP 50個資料列
 ```
+
 * Contains
+
 ```C#
 A.Contains(B) // A中任何含有B之部分
 ```
+
 * Where
+
 ```C#
 A.Where(x => x.num == '1' ) // 篩選A中num為1者
 ```
+
 * Except
+
 ```C#
 A.Except(AExcept, new AComparer()) // A中排除掉AExcept的資料(A與AExcept需為同個class object); AComparer負責比對某個行
 ```
+
 * Any
 * Skip
 * Order

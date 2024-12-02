@@ -5,7 +5,7 @@
   - [Docker Compose](#docker-compose)
   - [Dotnet Core](#dotnet-core)
   - [Azure Container Registry](#azure-container-registry)
-  - [Azure Pipeline & Web App](#azure-pipeline--web-app)
+  - [Azure Pipeline \& Web App](#azure-pipeline--web-app)
   - [Selenium Grid](#selenium-grid)
     - [開發流程步驟](#開發流程步驟)
     - [佈署步驟](#佈署步驟)

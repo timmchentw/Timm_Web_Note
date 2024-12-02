@@ -137,24 +137,55 @@ $('...').on(...)的事件中，<br>
 | `.removeAttr('attribute_name')`| 移除attribute內容 |
 | `.valid()` | 驗證form |
 
+### AJAX
+
+* .ajax
+* [.getJSON](https://www.runoob.com/jquery/ajax-getjson.html)
+
+
 觸發動作後，須在括號內加入`function() {...}`
 
 ### 套件與功能
-* [Dialog](https://jqueryui.com/dialog/) 彈出視窗
+
+#### 表格
 * [DataTables](https://datatables.net/) 動態表格
-* [Dropzone](https://www.dropzonejs.com/) 拖拉式上傳
+* [Dynatable](https://github.com/alfajango/jquery-dynatable) 動態表格
+* [igGrid](https://www.igniteui.com/help/iggrid-overview) 功能齊全的Infragistics系列-動態表格
+
+#### 通知
+* [Dialog](https://jqueryui.com/dialog/) 彈出視窗
+* [Bootstrap Toasts](https://getbootstrap.com/docs/5.0/components/toasts/) 彈出小窗格
+
+#### 選單
 * [Collapse (bootstrap)](https://www.runoob.com/bootstrap/bootstrap-collapse-plugin.html) 開闔式按鈕
 * [zTree](http://www.treejs.cn/v3/main.php#_zTreeInfo) 樹狀圖選單
-* [tokenInput](https://loopj.com/jquery-tokeninput/) 搜尋建議標籤 
-* [redactor](https://imperavi.com/redactor/) HTML編輯器
+
+
+#### Input
 * 使用`<input type="file" id="file">`在前端取得檔案
-```javascript
-$('#file').change( function(e) {
-  var uploadedFiles = e.target.files
-  var filename1 = uploadedFiles[0].name
-});
-```
+
+  ```javascript
+  $('#file').change( function(e) {
+    var uploadedFiles = e.target.files
+    var filename1 = uploadedFiles[0].name
+  });
+  ```
+
+* [tokenInput](https://loopj.com/jquery-tokeninput/) 搜尋建議標籤 
+* [Dropzone](https://www.dropzonejs.com/) 拖拉式上傳
+* [igCombo](https://www.igniteui.com/help/igcombo-overview) 功能齊全的Infragistics系列-搜尋與下拉
+* [Dual-List-Selector](https://www.patternfly.org/components/dual-list-selector/) 左右清單選擇器
+
+#### 擴充功能
+* [redactor](https://imperavi.com/redactor/) HTML編輯器
+
 
 # [ReactJS](https://github.com/timmchentw/Web-Note-Text/blob/master/%E7%AD%86%E8%A8%98%20-%20JS%20React.md)
 # AngularJS
 # Vue
+
+
+# Storage
+
+* LocalStorage: 用於儲存長期客戶端常使用的資料
+* SessionStorage: 用於儲存"各Tab"客戶端常使用的資料 (關閉Tab即會清除)

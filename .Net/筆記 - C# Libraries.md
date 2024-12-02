@@ -50,6 +50,10 @@
     result.Should().BeEquivalentTo(expect, (option) => option.Using<decimal>(ctx => ctx.Subject.Should().BeApproximately(ctx.Expectation, 0.01M)).WhenTypeIs<decimal>()));
     ```
 
+* ### SmartEnum
+
+    static enum class的擴充套件
+
 ## Files
 
 * ### NPOI

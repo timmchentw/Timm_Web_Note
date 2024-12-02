@@ -47,11 +47,12 @@
 * 於BRANCHES的分支點兩下即可切換分支 (會自動更改檔案) </br>
 * 新增Branch： </br>
    於欲生分支的Commit右鍵 </br>
-   -> Branch... </br>
-   -> 命名新branch並送出 </br>
-   -> 在下次Commit時選擇新branch再push </br>
-   ※請先新增branch再push，反過來會吃不到新branch </br>
-   ※branch需新增到remote才能在雲端儲存 </br>
+   1. Branch...
+   2. 命名新branch並送出
+   3. 在下次Commit時選擇新branch再push
+       * 請先新增branch再push，反過來會吃不到新branch
+       * branch需新增到remote才能在雲端儲存
+       * Brancha命名可透過XXX/OOO的方式，作為簡單的資料夾分類
 * 合併Branch: </br>
    於欲合併的"主線節點"點選Merge </br>
    -> 開啟合併頁面，選擇欲合併的"支線節點"
@@ -73,3 +74,6 @@
 
 * 屬於本地電腦無法直接Push所需使用的功能
 * 藉由Pull Request Merge Target Branch，整合Approve機制，讓主管或Source code負責人Review、給予建議後，再行Merge
+* 減少一次Review太多的小技巧:
+  1. Sub Feature Branch: 在原有Feature Branch中新增Sub Featrue Branch，並且在撰寫告一小段落時，發出PR給Approvers
+  2. Draft PR: 在撰寫告一小段落時，針對Feature Branch發出Draft PR，讓Approvers在撰寫時先行給予建議(可分批Push)，並在後續正式要Merge時，再轉為一般PR

@@ -1,5 +1,16 @@
 # Design Pattern
 
+- [Design Pattern](#design-pattern)
+  - [Factory](#factory)
+    - [相依性注入](#相依性注入)
+    - [簡單工廠](#簡單工廠)
+    - [抽象工廠](#抽象工廠)
+  - [策略模式](#策略模式)
+  - [Template 範本模式](#template-範本模式)
+  - [Singleton 單例模式](#singleton-單例模式)
+  - [Prototype 原型模式](#prototype-原型模式)
+
+
 ## Factory
 
 ### 相依性注入
@@ -104,7 +115,7 @@
     }
     ```
 
-### 策略模式
+## 策略模式
 
 * 適合常拓展的方法，撰寫新的Class繼承特定Strategy介面，使用時進行抽換
 * 優點: 好維護、易抽換、符合SRP
@@ -183,7 +194,7 @@
     }
     ```
 
-### Template 範本模式
+## Template 範本模式
 
 * 以Abstract class進行實作的模式
 * 優點1: 可共用一些方法，減少重複的程式碼
@@ -193,7 +204,7 @@
 * 建議1: 少用Virtual，盡量只使用Abstract method進行Override，避免繼承鍊的破壞
 * 建議2: 明確區分private & protected，不必要給繼承class使用的method盡量使用private
 
-### Singleton 單例模式
+## Singleton 單例模式
 
 * 只new一個實體，日後直接共用該實體
 * 優點1: 資源效率最大化，可節省記憶體
@@ -214,7 +225,7 @@
     ```
 
 
-### Prototype 原型模式
+## Prototype 原型模式
 
 * 待確認?
 

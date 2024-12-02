@@ -1,17 +1,63 @@
 # C# 筆記
 
-* [字串處理](#字串處理)
-* [變數型態](#變數型態)
-* [存取授權](#存取授權)
-* [建構子](#建構子)
-* [存取授權](#存取授權) 
-* [靜態修飾](#靜態修飾) 
-* [繼承性](#繼承性) 
-* [運算子](#運算子)
-* [判斷式與迴圈](#判斷式與迴圈)
-* [錯誤處理](#錯誤處理)
+- [C# 筆記](#c-筆記)
+  - [**《字串處理》**](#字串處理)
+    - [檔案字串](#檔案字串)
+    - [Regex (Regular Expression字串格式檢查)](#regex-regular-expression字串格式檢查)
+  - [變數型態](#變數型態)
+    - [基本型態](#基本型態)
+    - [資料結構](#資料結構)
+    - [資料Interface](#資料interface)
+  - [修飾詞](#修飾詞)
+  - [Property與Field](#property與field)
+  - [建構子 Contructor](#建構子-contructor)
+  - [靜態修飾 Static](#靜態修飾-static)
+  - [繼承性 Inheritance](#繼承性-inheritance)
+  - [修飾詞](#修飾詞-1)
+  - [運算子](#運算子)
+  - [判斷式與迴圈](#判斷式與迴圈)
+    - [**IF**](#if)
+    - [**Null Operator**](#null-operator)
+    - [**SWITCH**](#switch)
+    - [**FOR**](#for)
+    - [**FOREACH**](#foreach)
+    - [**TRY \& CATCH**](#try--catch)
+    - [IS](#is)
+    - [HTML處理](#html處理)
+      - [HtmlAgilityPack](#htmlagilitypack)
+    - [檔案讀寫](#檔案讀寫)
+  - [注意事項](#注意事項)
+  - [Cache快取](#cache快取)
+  - [錯誤處理](#錯誤處理)
+  - [Recursion (遞迴)](#recursion-遞迴)
+  - [Delegate](#delegate)
+  - [Expression](#expression)
+  - [Yield](#yield)
+  - [Class](#class)
+    - [Abstract Class \& Interface](#abstract-class--interface)
+    - [Partial Class](#partial-class)
+  - [Lock](#lock)
+  - [網址與路徑](#網址與路徑)
+    - [Path](#path)
+    - [Directory \& File](#directory--file)
+  - [Stream](#stream)
+  - [Expression-bodied](#expression-bodied)
+    - [Expression-bodied Methods](#expression-bodied-methods)
+      - [Expression-bodied members](#expression-bodied-members)
+  - [Asynchronize](#asynchronize)
+    - [async/await](#asyncawait)
+  - [Reflection](#reflection)
+    - [typeof](#typeof)
+    - [Property](#property)
+    - [Change type](#change-type)
+    - [Attributes](#attributes)
+    - [CreateInstance](#createinstance)
+  - [Generic](#generic)
+    - [where](#where)
+  - [Assembly](#assembly)
+  - [Reference:](#reference)
 
-[用Dict去做掃描比LINQ Where速度快上10倍以上](https://blog.darkthread.net/blog/linq-search-performance-issue)
+* [用Dict去做掃描比LINQ Where速度快上10倍以上](https://blog.darkthread.net/blog/linq-search-performance-issue)
 
 ## **《字串處理》**
 
@@ -103,21 +149,34 @@
 
 ### 基本型態
 * 數字邏輯: `int` `float` `double` `decimal`(指定位數) `bool`(True & False)
-* 其他: `string` `char` `object` `interface` `delegate`
+* 其他: `string` `char` `object` `interface` `delegate (action, func)`
 
 ### 資料結構
 | 型態 | 名稱 | 特性 | 範例|
 |-----|-----|-----|-----|
 | Array | 陣列 | 須宣告型別+固定資料長度 | `int[] newArray = new int[3]{777,666,123};` |
 | List | 列表 | 須宣告型別+可插入(.Insert)移除(.Remove) | `List<string> newList = new List<string>();`  <br>  `newList.Add("newString");` |
+| Span | 跨度 | 高効、連續Memory(Stack)、直接指向而非複製、適用長文字 | `{ 1, 2, 3 }.AsSpan()` |
 | Datatable | 資料表 | 複合資料型態+分別插入Col與Row | `DataTable dt = new DataTable();`  <br>  `dt.Columns.Add("cName", typeof("string"));`  <br>   `Datarow row = dt.NewRow();`  <br>  `row["cName"] = ...`  <br>  `dt.Rows.Add(row)`|
 | Stack | 堆疊 |  |  |
 | Queue | 佇列 |  |  |
-| Dictionary | 字典 |  |  |
+| Dictionary | 字典(雜湊表) | 快速Lookup |  |
+| Hashset | 雜湊集合 | 可自動忽略重複的Add to list元素(同Dictionary的Key) | `HashSet<string> keys = new(["aaa", "bbb"], StringComparer.OrdinalIgnoreCase);  // Comparer先加入在後面的Key compare就可以內建使用` </br> `bool isKeyExist = keys.Contains("aaa");` |
+| ConcurrentDictionary | 跨執行緒字典 | 可避免thread衝突 |  |
 | Tuple | 多參數 |||
 | struct | class參數 |  | MyClass.MyProp |
-| Enum |  |  |  |
+| Enum | 列舉 |  |  |
 | NameValueCollection |  |  |  |
+| Delegate | 委派 | 最為彈性(不須指定型別) |  |
+| Action | 輸入委派 | 定義輸入型別的委派 |  |
+| Func | 輸入輸出委派 | 定義輸入輸出型別的委派 |  |
+
+### 資料Interface
+| 型態 | 名稱 | 特性 | 範例|
+|-----|-----|-----|-----|
+| IEnumerable |  | 最簡便的多值物件規範 |  |
+| ICollection |  | 擴充IEnumerable，如Add(), Remove(), Contains() |  |
+| IList |  | 擴充ICollection，如Insert(), RemoveAt(), this[] |  |
 
 ## 修飾詞
 
@@ -137,7 +196,7 @@
 
 ## Property與Field
 
-* Field: 為Class變數，通常為Private
+* Field: 為Class變數，通常為Private (小心有順序呼叫問題)
 
   ```C#
   private string _something;
@@ -146,7 +205,50 @@
 * Property: 封裝Field或其他數據，有get/set accessor，簡化操作Field的方法
 
   ```C#
-  public string Something { get;set; }
+  public string Something { get; set; }
+
+  // 也可以設定Accessibility
+  public string SomethingRestrictSet { get; private set; }
+
+  // 與Field互動，達到內外操作分離
+  public string SomethingPublic
+  {
+    get { return _something; }
+    set
+    {
+      if (_something == null)
+        _something = value;
+    }
+  }
+
+  // 限制只能由constructor來做set
+  public string SomethingOnlyCtorCanSet { get; init; }
+
+  // Expression-bodied Members (簡化getter/setter)
+  public string SomethingSimplier
+  {
+    get => _something;
+    set => _something = value;
+  }
+
+  // Indexers
+  // 用法如: var collection = new SomeCustomCollection<string>();
+  //         collection[0] = "Hello world";
+  public class SomeCustomCollection<T>
+  {
+    private T[] _array = new T[100];
+    public T this[int i]
+    {
+      get { return _array[i]; }
+      set { _array[i] = value; }
+    }
+  }
+
+  // Static (適合一些Singleton情境，因記憶體只存一處，注意Async問題，慎用!!!)
+  public static string SomethingStatic { get; set; }
+
+  // Abstract
+  public abstract string SomethingNeedToImplement { get; set; }
   ```
 
 ## 建構子 Contructor
@@ -259,6 +361,9 @@ class B : A         //B繼承A之屬性(內建變數、Function等)
 | `==` `!=` | 等於 / 不等於  | 
 | `+=` `-=` | 原變數再加/減多少 |
 | `/` `%` | 除取商數/餘數 |
+| 其他運算子 | 意義 |
+| `..` | Range operator，為指定序列範圍，如`0..5`為指定0到5 |
+| `^` | Index from end operator，為序列結尾起算，如`^3..^1`為指定倒數3到1 |
 
 ## 判斷式與迴圈
 
@@ -484,6 +589,12 @@ public static void RemovedCallback(string k, object v, System.Web.Caching.CacheI
 * [建立客製化exception必要步驟](https://rainmakerho.github.io/2018/08/21/2018032/)
 * [StackOverFlow正確建立可序列化Exception](https://stackoverflow.com/questions/94488/what-is-the-correct-way-to-make-a-custom-net-exception-serializable)
 
+* 簡化Thorw Exception
+
+```C#
+ArgumentNullException.ThrowIfNull(stringToBeCheck, nameof(stringToBeCheck))
+```
+
 ## Recursion (遞迴)
 
 ```C#
@@ -543,6 +654,35 @@ public IEnumerable<string> Sample()
 * Interface: 強制Implement class實作指定Function/Property，並不可含任何Implementation
 
 ### Partial Class
+
+* Partial class允許不同的property存在不同檔案
+* 適合用於大型開發、並且各自維護部分欄位的狀況
+* 不允許相同的property / function存在各partial class裡面
+
+```C#
+// File1.cs
+public partial class MyClass
+{
+    public void Method1() 
+    {
+        Console.WriteLine("Method1");
+    }
+}
+
+// File2.cs
+public partial class MyClass
+{
+    public void Method2() 
+    {
+        Console.WriteLine("Method2");
+    }
+}
+
+// Usage
+MyClass myClass = new MyClass();
+myClass.Method1(); // Output: Method1
+myClass.Method2(); // Output: Method2
+```
 
 ## Lock
 

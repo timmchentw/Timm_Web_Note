@@ -10,6 +10,312 @@ ps. Controller呼叫new service，new service時也會new DB connection，如果
 
 ## Program & Startup
 
+### Authentication
+
+* Authentication為驗證User登入、身分是否合法，與Authorization不同，另一者主要作為Role assign
+* 在Startup的部分，設定AddAuthentication middleware
+
+```C#
+// .Net 6 Program.cs
+var builder = WebApplication.CreateBuilder(args);
+// ...
+builder.Services.AddScoped<MyCookieAuthenticationEvents>(); // 註冊客製化Auth事件(登入轉址、登出等)
+// ...
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.ExpireTimeSpan = TimeSpan.FromHours(12);
+        options.SlidingExpiration = false;
+        options.EventsType = typeof(MyCookieAuthenticationEvents);
+        options.AccessDeniedPath = "/Home/AccessDeny";
+        options.LoginPath = $"/Home/Login";
+    });
+// ...
+var app = builder.Build();
+app.UseAuthentication();
+```
+
+* 自定義CookieAuthenticationEvents middleware (記得在上方EventsType註冊)
+* 可客製如取得當下的url、domain轉換等等
+
+```C#
+public class MyCookieAuthenticationEvents : CookieAuthenticationEvents
+{
+    public MyCookieAuthenticationEvents()
+    {
+    }
+
+    public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
+    {
+        var userPrincipal = context.Principal;
+
+        if (userPrincipal == null ||
+            !string.IsNullOrEmpty(userPrincipal.Claims.Where(x => x.Type == ClaimTypes.NameIdentifier).FirstOrDefault()?.Value))
+        {
+            // 設定登出條件 (看登入時claim如何設定)
+            context.RejectPrincipal();
+            await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return;
+        }
+    }
+
+    public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)
+    {
+        // 可設定domain轉換
+        string host = context.Request.Host.Value;
+        if (context.Request.Host.Host.Equals("mywebsitesample.azurewebsites.net", StringComparison.OrdinalIgnoreCase))
+        {
+            host = "my.domain.com";
+        }
+
+        // 取得現在的url，並在轉址時附上為query string
+        var currentUrl = $"{context.Request.Scheme}://{host}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+        string loginUrl = $"https://{host}{context.Options.LoginPath}";
+
+        var redirectUrlWithReturnUrl = QueryHelpers.AddQueryString(loginUrl, "returnUrl", currentUrl);
+        context.Response.Redirect(redirectUrlWithReturnUrl);
+
+        return Task.CompletedTask;
+    }
+}
+```
+
+#### Shared cookie (Single sign-on)
+
+* 注意要設定cookie name & path (不同path的cookie不互通)
+* 也要設定data protection (用於在不同Websites間解密cookie內容)
+* 指定SameSite的cookie存取嚴格程度(strict, lax, none...)
+* 範例參考[官方文件](https://learn.microsoft.com/zh-cn/aspnet/core/security/cookie-sharing?view=aspnetcore-8.0)、[cookie嚴格程度說明](https://learn.microsoft.com/en-us/aspnet/core/security/samesite?view=aspnetcore-8.0)、[Data Protection設定](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-8.0)
+
+```C#
+// .Net 6 Program.cs
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        // 這塊跟上方一樣
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        options.SlidingExpiration = false;
+        options.EventsType = typeof(MyCookieAuthenticationEvents);
+        options.AccessDeniedPath = "/Home/AccessDeny";
+        options.LoginPath = "/Home/Login";
+
+        // 這塊設定共享cookie
+        options.Cookie.SameSite = SameSiteMode.Strict;  // 可設定嚴格程度
+        options.Cookie.Name = ".AspNet.SharedCookie";
+        options.Cookie.Path = "/";  // 避免有不同basePath時，cookie可能會存在不同路徑 (如/v1, /v2會被視為不同存在)
+        options.DataProtectionProvider = DataProtectionProvider.Create(
+            new DirectoryInfo(
+                (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) ?
+                    @"C:\inetpub\wwwroot\MyWebsite\Keys\"
+                    : "/var/www/MyWebsite/Keys/"));  // key加密檔案存在server端，host端必須要access到同一個檔案才行(即各個websites要放在同一個file system裡面)
+    });
+```
+
+* 跨Server需要使用到KeyVault、或是DB，可參考[官方文件說明](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-8.0#protectkeyswithazurekeyvault)，以下為dbcontext的用法 (MyDbContext必須實作`IDataProtectionKeyContext`)
+
+```C#
+// .Net 6 Program.cs
+using Microsoft.AspNetCore.DataProtection;
+// ...
+builder.Services.AddDataProtection()
+    .SetApplicationName("AllWebsiteShouldUseSameName")
+    .PersistKeysToDbContext<MyDbContext>();
+// Cookie那邊不需特定設定，記得上面區塊的'options.DataProtectionProvider'就不用特別設定了
+```
+
+* 想瞭解.Net Core底層如何判定cookie是否合法，可參考以下部分進行debug (中斷點可下在上方自行覆寫的MyCookieAuthenticationEvents當中)
+  * HandleAuthenticateAsync
+  * ReadCookieTicket
+  * HandleChallengeAsync
+  * 注意：如果無論如何驗證都過了還是無法通過authorize，可檢查一下middleware設置的`UseAuthentication`必須放在`UseAuthorization`前面
+  ![image](images/.Net%20Core/9.png) </br>
+  * F12→Application查看Cookie資料
+    ![image](images/.Net%20Core/10.png) </br>
+
+#### Redirect to login
+
+* login get提供return url (由前端傳到post)
+* 
+
+```C#
+public class HomeController
+{
+    private AccountService _accountService;
+    private HomeController _logger;
+
+    public HomeController(IHttpContextAccessor httpContextAccessor, AccountService accountService, ILogger<HomeController> logger)
+    {
+        _accountService = accountService;
+        _logger = logger;
+    }
+
+    // login page記得允許匿名存取
+    [AllowAnonymous]
+    public IActionResult Login(string? returnUrl)
+    {
+        // 由前一個頁面提供Return URL (參考前面MyCookieAuthenticationEvents.RedirectToLogin)
+        ViewBag["ReturnUrl"] = returnUrl;
+        return View();
+    }
+
+    // login page記得允許匿名存取
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginViewModel model)
+    {
+        if (ModelState.IsValid)
+        {
+            // 自行驗證user合法性(如DB, API資料驗證)
+            var loginTicket = await _accountService.Login(new LoginDto()
+            {
+                Email = model.Email,
+                Password = model.Password,
+                ClientIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? ""
+            });
+
+            if (loginTicket.Success && loginTicket.Data != null)
+            {
+                var account = loginTicket.Data;
+
+                // Identity日後可從HttpContext當中取得登入時的資訊
+                var claims = new List<Claim>()
+                {
+                    new Claim(ClaimTypes.NameIdentifier, account.Id.ToString()),
+                    new Claim(ClaimTypes.Name, string.IsNullOrEmpty(account.Name) ? String.Empty : account.Name),
+                    new Claim(ClaimTypes.Role, JsonConvert.SerializeObject(user.Roles)),
+                };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+                // 設定cookie sign in
+                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity),
+                    new AuthenticationProperties()
+                    {
+                        ExpiresUtc = DateTime.UtcNow.AddHours(12),
+                        IsPersistent = true,
+                    });
+
+                _logger.LogInformation("User logged in. Name: {Name}, Time: {Time} .", account.Name, DateTime.Now.ToString());
+
+                // Return url前安全檢查
+                if (IsValidReturnUrl(model.ReturnUrl))
+                {
+                    return Redirect(model.ReturnUrl);
+                }
+                else
+                {
+                    return RedirectToAction("Index");
+                }
+            }
+            else
+            {
+                ViewBag["ResponseCode"] = loginTicket.Code;
+                ViewBag["ResponseMessage"] = loginTicket.Message;
+            }
+        }
+        return View();
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> LogOut(string? returnUrl)
+    {
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // Return url前安全檢查
+        if (IsValidReturnUrl(returnUrl))
+        {
+            return Redirect(returnUrl);
+        }
+        else
+        {
+            return RedirectToAction("Index");
+        }
+    }
+
+    private bool IsValidReturnUrl(string returnUrl)
+    {
+        bool isValid = false;
+
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            var requestHost = Accessor.HttpContext?.Request?.Headers["X-Forwarded-Host"].FirstOrDefault()   // DNS設定的公開domain
+                ?? Accessor.HttpContext?.Request?.Host.Host;
+
+            // 比較Return url Domain與目前站台是否相同
+            if (Uri.TryCreate(returnUrl, UriKind.Absolute, out Uri? uriResult))
+            {
+                isValid = string.Equals(uriResult.Host, requestHost, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+            {
+                _logger.LogInformation("Parse returnUrl failed. Current domain: {CurrentDomain}; Return url: {ReturnUrl}", requestHost, returnUrl);
+            }
+        }
+        return isValid;
+    }
+}
+```
+
+#### Identity
+
+* 官方[非Identity架構方法指南](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/cookie?view=aspnetcore-8.0)
+* Claim & Identity說明見[ASP.NET Core Authentication系列（一）理解Claim, ClaimsIdentity, ClaimsPrincipal](https://www.cnblogs.com/liang24/p/13910368.html)
+  * HttpContextAccessor可取得當時存的Identity
+
+    ```C#
+    public class MyService
+    {
+        protected int? UserId
+        {
+            get
+            {
+                return Convert.ToInt32(_httpContext.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier));
+            }
+        }
+
+        protected IHttpContextAccessor _httpContext { get; }
+        public BaseService(IHttpContextAccessor httpContextAccessor)
+        {
+            _httpContext = httpContextAccessor;
+        }
+    }
+    ```
+
+
+* 有設定才能在Controller上設置[Authorize]來驗證User
+
+### Route
+
+* 運作環境有route prefix時，可在Map Route前呼叫UsePathBase (務必要放在所有route設定前)，這樣有無prefix都可以正常呼叫
+* 注意login path也需要加上prefix才能在登入時導到正確的路徑
+
+```C#
+// .Net 6 Program.cs
+app.UsePathBase("/v2"); // 這邊設定prefix
+
+// ...
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Home}/{action=Index}/{id?}");
+    // 這邊要注意將原本的index page轉為有prefix的index page，避免cookie無法辨別
+    endpoints.MapGet("/", context =>
+    {
+        context.Response.Redirect($"{RouteResource.BackendRoutePrefix}/Home/Index");
+        return Task.CompletedTask;
+    });
+    //...
+});
+// Cookie驗證的部分，要注意login path也要包含basepath (或是於自行施作CookieAuthenticationEvents時要把prefix也包含進去Url)
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/v2" + "/Home/Login";
+    });
+```
+
 ### Dependency Injection
 
 #### 註冊服務
@@ -56,6 +362,8 @@ ps. Controller呼叫new service，new service時也會new DB connection，如果
 
 #### Middleware註冊
 
+- Middleware是針對HTTP請求的中介層
+
 ```C#
 // Program.cs (.Net 6)
 
@@ -80,7 +388,10 @@ public class MyMiddleware : IMiddleware
     }
 ```
 
-#### Action Filter註冊
+#### Filter註冊
+
+- Action Filter屬於MVC獨有中介層，與Middleware不同
+- 可利用Exception, Action & Result Filter捕捉資訊
 
 ```C#
 // Startup.cs
@@ -118,27 +429,73 @@ public class ValidateModelFilter : IActionFilter
 }
 ```
 
-#### Authorize
+##### Authorize Filter
 
-實作IAuthorizationFilter
+* 設定步驟
 
-```C#
-[AttributeUsage(AttributeTargets.All)]
-public class MyAuthorizeAttribute : Attribute, IAuthorizationFilter
-{
-    public void OnAuthorization(AuthorizationFilterContext context)
-    {
-        var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
-        var userId = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var controllerName = context.HttpContext.Request.RouteValues["controller"]?.ToString();
+  1. 需要在program.cs當中設定middleware `UseAuthorization`
+     * 注意!!!!! 一定要放在UseAuthentication後面! 先驗證再授權，否則永遠進不到Authentication middleare!)
 
-        if (!userService.HasPermission(userId, controllerName))
+        ```C#
+        // Program.cs
+        app.UseAuthentication();
+        app.UseAuthorization(); // <--一定要放在UseAuthentication後面! 先驗證user合法性、再處理授權
+        ```
+
+  2. Controller/Action當中加入Attribute `[Authorize]`
+
+        ```C#
+        [Authorize] // 擇一放置即可
+        public class HomeController : Controller
         {
-            context.Result = new ForbidResult();
+            [Authorize] // 擇一放置即可
+            public IActionResult Index()
+            {
+                return View();
+            }
+        }
+        ```
+
+  3. `[AllowAnonymous]`會覆蓋過`[Authorize]`：比如controller設定`[Authorize]`，則特定action要跳過授權檢查的話加入`[AllowAnonymous]`即可
+
+        ```C#
+        [Authorize] // 全部action套用
+        public class HomeController : Controller
+        {
+            [AllowAnonymous] // 特定action不需要"授權前"的驗證
+            public IActionResult Index()
+            {
+                return View();
+            }
+        }
+        ```
+
+
+* 客製化實作IAuthorizationFilter
+
+    ```C#
+    [AttributeUsage(AttributeTargets.All)]
+    public class MyAuthorizeAttribute : Attribute, IAuthorizationFilter
+    {
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+            var userId = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var controllerName = context.HttpContext.Request.RouteValues["controller"]?.ToString();
+
+            if (!userService.HasPermission(userId, controllerName))
+            {
+                context.Result = new ForbidResult();
+            }
         }
     }
-}
-```
+    ```
+
+  * Action指定需要授權的Role
+
+  ```C#
+
+  ```
 
 ## Environment
 
@@ -227,6 +584,11 @@ public class MyAuthorizeAttribute : Attribute, IAuthorizationFilter
 
 ### Linux
 
+### 問題排解
+
+* 站台運作後出現HTTP Error 500.30 - ANCM In-Process Start Failure
+  * appsettings.json有格式錯誤，移除錯誤即可
+  * Visual studio有bug，更新即可
 ## 傳輸協定
 
 ### gRPC

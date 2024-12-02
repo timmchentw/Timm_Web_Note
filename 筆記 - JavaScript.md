@@ -166,6 +166,95 @@ $('...').on(...)的事件中，<br>
 
   ```javascript
   $('#file').change( function(e) {
+
+#### 其他
+* [Dialog](https://jqueryui.com/dialog/) 彈出視窗(JQuery)
+
+  ```html
+  <script>
+  $( function() {
+    $( "#dialog" ).dialog();
+  } );
+  </script>
+ 
+  <div id="dialog" title="Basic dialog">
+    <p>This is the default dialog which is useful for displaying information. The dialog window can be moved, resized and closed with the &apos;x&apos; icon.</p>
+  </div>
+  ```
+
+* [PNotify](https://sciactive.com/pnotify/) 彈出通知
+  
+  ```js
+  new PNotify({ text: "Something wrong!", type: 'error', styling: 'bootstrap3' });
+  ```
+
+* [toastr](https://github.com/CodeSeven/toastr)
+
+  ```js
+  toastr.success("success","");
+  toastr.info("info","");
+  toastr.error("error","");
+  toastr.warning("warning","");
+  ```
+
+* [DataTables](https://datatables.net/) 動態表格 (JQuery)
+  
+  ```html
+  <script>
+  $('#myTable').dataTable({
+      destroy: true,
+      serverSide: true,
+      searching: false,
+      ordering: true,
+      scrollX:true,
+      displayStart: 0,
+      ajax: {
+          url: '...',
+          type:"POST",
+          data : { query: "keyword" },
+          datatype: 'json'
+      },
+      rowCallback: function( row, data, index ) {
+          // 根據資料做客製
+          $('td',row).css("background-color", "white");
+      },
+      order: [[ 1, 'asc' ]],
+      columns: [
+          {
+              orderable: false,
+              render: (data, type, row)=>{
+                  return '<a class="btn btn-round btn-primary" type="button" href="/myAction/Edit?Id='+row.id+'">Edit</a>';
+              }
+          },
+          { data: 'myviewmodel.nesteddata.id', name: 'Id' }
+          { data: 'myviewmodel.nesteddata.name', name: 'Name' }
+      ]
+  });
+  </script>
+
+  <table id="myTable" class="table table-striped table-bordered" width="100%" style="white-space: nowrap;">
+      <thead>
+          <tr>
+              <th></th>
+              <th>Id</th>
+              <th>Name</th>
+          </tr>
+      </thead>
+  </table>
+  ```
+
+* [Dropzone](https://www.dropzonejs.com/) 拖拉式上傳
+* [Collapse (bootstrap)](https://www.runoob.com/bootstrap/bootstrap-collapse-plugin.html) 開闔式按鈕
+* [zTree](http://www.treejs.cn/v3/main.php#_zTreeInfo) 樹狀圖選單
+* [tokenInput](https://loopj.com/jquery-tokeninput/) 搜尋建議標籤 
+* [redactor](https://imperavi.com/redactor/) HTML編輯器
+
+### 功能
+
+* 使用`<input type="file" id="file">`在前端取得檔案
+
+  ```javascript
+  $('#file').change(function(e) {
     var uploadedFiles = e.target.files
     var filename1 = uploadedFiles[0].name
   });

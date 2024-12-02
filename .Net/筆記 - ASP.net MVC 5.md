@@ -8,7 +8,7 @@
 ```C#
 using MyProj.Models.viewmodel;  // 引入viewmodel目錄
 
-[httpGet]
+[HttpGet]
 public ActionResult MyAction(MyViewModel model)
 {
     MyData = "Here's the default data";
@@ -61,9 +61,23 @@ public ActionResult MyAction(myViewModel model)
 data: JSON.stringify({ Model: model })
 ```
 
+## ViewBag
+
+* 用於簡單物件由Controller傳遞到前端
+* 建議於View頂端取出，避免不好維護
+
+```razor
+@model MyViewModel
+@{
+    ViewData["Title"] = "MyTitle";
+    var errorMsg = ViewBag.ErrorMessage;
+}
+```
+
 ## TempData
 
 * 用於跨Controller Action & View的資料傳遞
+* 建議用於Redirect情境，如Error Message傳遞，參考[文章說明](https://rachelappel.com/2014/01/02/when-to-use-viewbag-viewdata-or-tempdata-in-asp-net-mvc-3-applications/)
 
 
 ## LINQ ENumerable

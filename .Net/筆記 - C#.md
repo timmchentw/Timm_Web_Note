@@ -93,6 +93,8 @@
 
 ### Regex (Regular Expression字串格式檢查)
 
+#### 語法
+
 | 功能 | 語法 |
 |-----|-----|
 | 允許範圍 | `[a-z]` `[0-9]` |
@@ -144,6 +146,21 @@
 | 表示式 |    `var regex = /expression/` |
 | 進行檢查 |  `regex.test("string")` |
 
+#### Email檢查
+
+`^ [a-zA-Z0-9._%+-]+@ [a-zA-Z0-9.-]+ (. [a-zA-Z] {2,}|. [0-9] {1,})$`
+
+* `^` 這個符號表示要匹配字符串的開始位置，也就是說，只有當字符串的第一個字符符合後面的條件時，才能繼續匹配。
+* `[a-zA-Z0-9._%+-]+ `這個部分表示要匹配一個或多個的字母、數字、下劃線、點號、百分號、加號或減號。這些字符都可以作為email地址的用戶名的部分。 **(`%` `+` 兩者可能部分系統不支援)**
+  * `[ ]` 表示一個字符集合，裡面的字符可以任意選擇一個。
+  * `+ `表示至少要有一個，可以有多個。
+* `@ `這個符號表示要匹配@字符，這是email地址的必要部分，用來分隔用戶名和域名。
+* `[a-zA-Z0-9.-]+ `這個部分表示要匹配一個或多個的字母、數字、點號或減號。這些字符都可以作為email地址的域名的部分。注意，這裡沒有下劃線、百分號、加號等字符，因為它們不是有效的域名字符。
+  * `. `這個符號表示要匹配一個點號，這是email地址的必要部分，用來分隔域名和頂級域名（TLD）。
+* `[a-zA-Z] {2,}|. [0-9] {1,} `這個部分表示要匹配兩種可能的情況之一：一種是兩個或更多的字母，另一種是一個或更多的數字。這些都可以作為email地址的頂級域名（TLD）的部分。
+  * `| `表示或者的意思，表示要選擇左邊或者右邊的條件之一。
+  * `{ } `表示重複次數，裡面的數字表示最少和最多的次數。如果只有一個數字，表示最少和最多都是那個數字。如果有兩個數字，用逗號隔開，表示最少和最多分別是那兩個數字。如果只有一個數字，後面有逗號，表示最少是那個數字，最多沒有限制。
+* `$ `這個符號表示要匹配字符串的結束位置，也就是說，只有當字符串的最後一個字符符合前面的條件時，才能完成匹配。
 
 ## 變數型態
 
@@ -709,6 +726,7 @@ myClass.Method2(); // Output: Method2
 ### Path
 
   ```C#
+    // 黏合URL Path
     Path.Combine("directory/root/", "/relativePath/file");
     Path.GetFileName("fullpath");
     Path.GetExtension("fullpath");
@@ -784,7 +802,7 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
 
 ### Attributes
 
-* 參考[官方文件說明](https://learn.microsoft.com/en-us/dotnet/standard/attributes/retrieving-information-stored-in-attributes)
+* 自製Attribute，參考[官方文件說明](https://learn.microsoft.com/en-us/dotnet/standard/attributes/retrieving-information-stored-in-attributes)
 
   ```C#
   [System.AttributeUsage(System.AttributeTargets.Class | System.AttributeTargets.Struct)]  
@@ -799,6 +817,19 @@ fileStream.Position = 0;    // 重置讀取位置，方便下一次Stream被讀�
           version = 1.0;  
       }  
   }  
+  ```
+
+* InternalVisiableTo (可以允許特定Project/DLL可以存取此Class的Internal相目)
+
+  ```C#
+  [assembly: InternalsVisibleTo("MyTestProjectAssembly")]
+  namespace MyProductCodeProject
+  {
+      internal class MyClass
+      {
+          //...
+      }
+  }
   ```
 
 ### CreateInstance
@@ -840,6 +871,47 @@ public static void GenericMethod<T>()
   ```
   
 
+## Url
+
+* 將Url轉成正規格式：`Uri.EscapeUriString("...")`
+* 將整串文字轉成Url Encode格式 (用於放置於Parameter內) `HttpUtility.UrlEncode("...")`
+
+## Comment
+
+* `//`
+* `/* ... */`
+
+### Documentation
+
+* 對Class參數進行說明的功能 ```///```
+* [C# Documentation: A Start to Finish Guide](https://blog.submain.com/c-documentation-start-finish-guide/)
+
+## Extension
+
+* Static class + static function + this parameter可直接將該型別新增extension方法
+
+```C#
+public static class Extensions
+{
+  public static string GetEnumDescription(this Enum enum)
+  {
+      FieldInfo? fieldInfo = enum.GetType().GetField(value.ToString());
+
+      var fieldAttribute = fieldInfo?.GetCustomAttributes(typeof(DescriptionAttribute), false);
+      if (fieldAttribute != null)
+      {
+          DescriptionAttribute[] attributes = fieldAttribute as DescriptionAttribute[];
+
+          if (attributes != null && attributes.Any())
+          {
+              return attributes.First().Description;
+          }
+      }
+
+      return enum.ToString();
+  }
+}
+```
 
 
 ## Reference:

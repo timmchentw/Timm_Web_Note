@@ -224,6 +224,53 @@
     }
     ```
 
+### Adapter 適配器模式
+
+* 優點: 在不改變現有Class的情況下，製造出符合Interface要求的內容
+
+    ```C#
+    // 程式端需求的介面
+    interface ITarget
+    {
+        public void Query();
+    }
+
+    // 轉換前的物件
+    class OriginalClass
+    {
+        public void SpecificQuery()
+        {
+            System.Console.WriteLine("run specificRequest in Adaptee class");
+        }
+    }
+
+    // 轉換器模式 → 符合介面
+    class ObjectAdapter : ITarget
+    {
+        private OriginalClass _adaptee;
+
+        public ObjectAdapter(OriginalClass adaptee)
+        {
+            // 注入原本的類別
+            _adaptee = adaptee;
+        }
+        public void Query()
+        {
+            _adaptee.SpecificQuery();
+        }
+    }
+
+    // 實際跑起來的樣子
+    public class Program
+    {
+        static void Main(string[] args)
+        {
+            OriginalClass adaptee = new OriginalClass();
+            ITarget target = new ObjectAdapter(adaptee);
+            target.Query();
+        }
+    }
+    ```
 
 ## Prototype 原型模式
 

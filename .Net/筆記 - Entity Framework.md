@@ -39,16 +39,18 @@ dotnet ef migrations script FromMigrationName ToMigrationName
 ```PowerShell
 # Package Manager Console 命令
 # 注意如果DbContext所在Project & connection strings專案不同，需把Package Manager Console 右上角的Default Project改為DbContext所在Project，並且手動指定Connection Strings
-Add-Migration Initial
+EntityFrameworkCore\Add-Migration Initial
 # 如有多個DbContext檔案，指定其名稱
-Add-Migration Initial -context DataContextName
+EntityFrameworkCore\Add-Migration Initial -context DataContextName
 
 # 小心會直接更新Database!
-Update-Database -Verbose
+EntityFrameworkCore\Update-Database -Verbose
 
 # 日後更新可改用這方法產生Script，再到SSMS Run
-Script-Migration 0 Initial
-Script-Migration -From Initial -To XXX
+EntityFrameworkCore\Script-Migration 0 Initial
+EntityFrameworkCore\Script-Migration -From Initial -To XXX
+
+# 這邊需要注意! Startup project會影響到EF Core取得Configuration的appsettings.josn路徑，如果Run語法失敗的話請更改Startup project再試看看
 ```
 
 #### Fluent API
@@ -302,6 +304,12 @@ public class UserRole
 - Id </br>
   設定Int Property為"Id"，EF Core將自動建立PK、Identity (流水號)
 
+* AsQueryable </br>
+  一般Select DB Repo返回的物件，屬於Lazy Loading，只有在ToList, First, Count...等執行指令時才會跑
+  * 如果在Where條件中加入外部Function，會因為Linq to sql無法翻譯，而出現失效的狀況
+* AsNoTracking </br>
+  取得即時的資料
+  
 - 連動表 (Foreign Key Linked)
   - [Relationship](https://learn.microsoft.com/en-us/ef/core/modeling/relationships) (或稱Entity Reference)
     - 部分Join表可利用Relationship做綁定，配合Include指令做直接Join成單一entity的作法 (比如Entity A當中已有Property連動Entity B)

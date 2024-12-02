@@ -2,6 +2,8 @@
 
 - [Container](#container)
   - [Docker](#docker)
+    - [指令表](#指令表)
+    - [LOG](#log)
   - [Docker Compose](#docker-compose)
   - [Dotnet Core](#dotnet-core)
   - [Azure Container Registry](#azure-container-registry)
@@ -21,7 +23,7 @@
 - [DockerDesktop](https://www.docker.com/products/docker-desktop/) </br>
 - [DockerHub](https://hub.docker.com) </br>
 
-下方為Docker desktop的Sample code，練習如何將pull, build, run & push image
+下方為Docker desktop的Sample code，練習如何將pull, build, run & push image (PowerShell)
 
 ```PowerShell
 #First, clone a repository
@@ -40,6 +42,28 @@ docker tag docker101tutorial timmchentw/docker101tutorial
 docker push timmchentw/docker101tutorial
 ```
 
+### 指令表
+
+* `docker run` `-d`在背景執行、`-p` publish port
+* `docker container ls` 檢視containers
+* `docker stats` 檢視containers執行資源
+* `docker stop $(docker ps -a -q)` 停止所有containers
+* `docker rm $(docker ps -a -q)`刪除所有containers
+* 
+
+### LOG
+
+* Docker Run當中可設定Log config，須注意 **如果預設設定導致Log太大會有操爆CPU的風險!**
+* Log路徑(Ubuntu)在`/var/lib/docker/containers/<containerId>`
+* 參考[官方說明文件](https://docs.docker.com/config/containers/logging/configure/)
+* 參考[案例解決方法](https://blog.kkbruce.net/2021/06/dockerd-cpu-high.html)
+
+```sudo
+docker run --log-opt mode=non-blocking --log-opt max-buffer-size=4m YOUR_IMAGE_NAME
+```
+
+![image](./images/container/20.png)
+
 ## Docker Compose
 
 Docker compose適合用於多個Container偕同運作的情況，可避免各自獨立的Container互相依賴時，沒有Run起來的情況
@@ -47,11 +71,14 @@ Docker compose適合用於多個Container偕同運作的情況，可避免各自
 1. 建立docker-compose.yml檔案
     - version會影響語法
     - build & dockerfile是給專案Build所使用 (docker compose build)
+      - .Net Core會自動產生DockerFile，其中定義Build, Test等等
     - image為實際執行container所抓下來的Repo image (docker compose push & pull)
     - ports須指定，才能讓其他service取用
     - depends_on須指定另一個service
 
    ```YAML
+    # docker-compose.yml
+    
     version: '3.4'
 
     services:
@@ -88,6 +115,8 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 2. 新增DockerFile在.csproj資料夾內</br>(Visual Studio在建立Solution時勾選可自動產生)
 
     ```Dockerfile
+    # Dockerfile
+    
     #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
     FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
@@ -112,7 +141,8 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
     ENTRYPOINT ["dotnet", "MyProject.dll"]
     ```
 
-3. 在該路徑上一層(.sln所在資料夾)下執行Docker Build，產生image
+3. 在該路徑上一層(.sln所在資料夾)下執行Docker Build，產生image </br>
+   ※ docker & docker-compose必須都要在solution層級下運作Build .csproj，如果跑到.csproj檔案層級的話雖然能跑指令但是會Build不起來
 
     ```docker
     docker build -t counter-image -f MyProject/Dockerfile .
@@ -161,6 +191,11 @@ Ps. 可參考下方Visual Studio建立Docker專案，Debug後可在Docker Deskto
 5. 可直接在Deployment Center直接設定CD、或可之後用Azure pipeline覆蓋設置
     ![9.png](images/container/9.png)
 
+    ※ **如果一開始沒設定到Container Registry資訊，需要到Configuration當中設定Environment Variable，填入Container registry當中提供的Url & 驗證資訊，才能成功pull image**
+    ![21.png](images/container/21.png)
+    ![22.png](images/container/22.png)
+
+
 ※ Public image (e.g. DockerHub) 可使用Azure CLI匯入ACR (參考[官方文件](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-import-images?tabs=azure-cli)) </br>
 
 ```AzureCLI
@@ -187,6 +222,8 @@ az acr import \
 3. Azure Web App deploy</br>
 
     ```YAML
+    # pipeline.yml
+
     # ASP.NET Core (.NET Framework)
     # Build and test ASP.NET Core projects targeting the full .NET Framework.
     # Add steps that publish symbols, save build artifacts, and more:
@@ -252,6 +289,8 @@ az acr import \
 (下例包含將現有的docker-compose.yml中的image加入TAG並改名，原因為Azure Web App在目前(2022)還尚未支援docker-compose merge的產出格式)
 
     ```YAML
+    # pipeline.yml
+
     # Push compose config for release pipelines 
     # (Azure Web App doesn't support "merged docker-compose.yml" file)
     - task: PowerShell@2
@@ -422,3 +461,4 @@ az acr import \
 * [[Microsoft] Push your first image to your Azure container registry using the Docker CLI](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli)
 * [[stackoverflow] Running public & private images on azure web service authentication issue](https://stackoverflow.com/questions/58977249/running-public-private-images-on-azure-web-service-authentication-issue)
 * [Approvals for YAML Pipelines in Azure DevOps](https://www.programmingwithwolfgang.com/deployment-approvals-yaml-pipeline/)
+* [A guide to setting up a .NET Core project using Docker, with integrated unit and component tests.](https://joehonour.medium.com/a-guide-to-setting-up-a-net-core-project-using-docker-with-integrated-unit-and-component-tests-a326ca5a0284)

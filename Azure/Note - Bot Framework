@@ -1,0 +1,10 @@
+# Bot Framework
+
+## 安裝步驟
+
+1. Create "Azure Bot" Resource
+2. Create "Web App" Resource
+3. 在Azure bot resource → Configuration → 設定剛才建立的Web App Messaging Endpoint
+   * Meesage endpoint - https://WEB_APP_NAME.azurewebsites.net/api/messages
+   ![image](./images/bot/0.png)
+4. Deploy

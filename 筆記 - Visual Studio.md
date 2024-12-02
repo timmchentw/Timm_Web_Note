@@ -38,6 +38,17 @@
 ![image](./images/VisualStudio/3.png)
 ![image](./images/VisualStudio/4.png)
 
+## Team Explorer
+
+### 設定連接Remote Repostories
+![image](./images/VisualStudio/5.png)
+![image](./images/VisualStudio/6.png)
+![image](./images/VisualStudio/7.png)
+![image](./images/VisualStudio/8.png)
+![image](./images/VisualStudio/9.png)
+![image](./images/VisualStudio/10.png)
+
+* [參考官方Github連結](https://github.com/github/VisualStudio/blob/master/docs/using/reviewing-a-pull-request-in-visual-studio.md)
 
 ## Test Explorer
 
@@ -65,3 +76,24 @@
 
 ### Live Share (Collabaration)
 * 可像Google doc一樣即時協作Code & Build
+### 電腦自授權SSL出問題
+
+1. 如使用Visual Studio建立的自授權SSL，預設localhost Chrome無法吃到
+![image](./images/VisualStudio/11.png)
+2. 查看錯誤訊息，確認localhost 自授權SSL的序號
+![image](./images/VisualStudio/12.png)
+3. Win 10搜尋"憑證"，進入憑證管理工具，在個人分類下找到localhost對一下序號
+![image](./images/VisualStudio/13.png)
+4. 試著重開機，不行的話輸入以下CMD語法重設 (完成後要重開機)
+
+```Bash
+dotnet dev-certs https --clean
+dotnet dev-certs https --trust
+```
+
+### Code Map
+
+1. 目標Function或Class右鍵→Code Map→Show on Code Map
+    ![image](./images/VisualStudio/15.png)
+2. 右鍵目標→Find All References
+    ![image](./images/VisualStudio/16.png)

@@ -18,7 +18,88 @@
   
     Logger整合，有多種Sink管道可擴充
     
+    ```C#
+    // Program.cs
+    var builder = WebApplication.CreateBuilder(args);
+
+    Serilog.Debugging.SelfLog.Enable(Console.WriteLine); // Console顯示錯誤 (用於Debug Sink很有用!)
+
+    builder.Host.UseSerilog((hostContext, config) =>
+    {
+        config
+            .MinimumLevel.Information() // 要Log的事件最低等級過濾
+            .Enrich.WithProperty("Application", "iTreasury Website")    // 客製化參數
+            .Enrich.WithProperty("AppRunningEnvironment", hostContext.HostingEnvironment.EnvironmentName)
+            .WriteTo.Console()  // Sink到畫面
+            .WriteTo.Conditional(   // Sink可設定條件
+                condition => hostContext.HostingEnvironment.IsDevelopment(),    // 根據環境選擇性紀錄
+                writeTo => writeTo.File(rollingInterval: RollingInterval.Day,
+                                        path: "./Logs/backend-log-.txt",
+                                        outputTemplate: "{Timestamp:yyyy/MM/dd HH:mm:ss.fff zzz} {Application} [{Level}] {Message}{NewLine}{Exception}"))   // 設定檔案
+    });
+    ```
+
     * [[Serilog.Enrichers.Sensitive]](https://www.nuget.org/packages/Serilog.Enrichers.Sensitive/#readme-body-tab) 可批次把特定Log資訊進行遮蔽
+
+    * Sinks
+      * Console
+      * File
+      * Application Insights
+
+        ```C#
+        writeTo.ApplicationInsights(
+            connectionString: hostContext.Configuration.GetSection("ApplicationInsights").GetSection("ConnectionString").Get<string>(),
+            telemetryConverter: TelemetryConverter.Traces
+        )
+        ```
+
+      * Email
+
+        ```C#
+        config.WriteTo.Email(new EmailConnectionInfo()
+            {
+                FromEmail = "",
+                ToEmail = "",
+                EmailSubject = "Error from Program",
+                MailServer = "",
+                Port = "",
+                NetworkCredentials = new NetworkCredential("accountXXX", "passwordXXX"),
+            },
+            restrictedToMinimumLevel: LogEventLevel.Error
+        )
+        ```
+
+      * API
+
+        ```C#
+        config.WriteTo.Http(
+            requestUri: hostContext.Configuration.GetSection("CustomApi").GetSection("Url").Get<string>(),
+            batchFormatter: new CustomApiFormatter(),
+            queueLimitBytes: 500 * 1024,
+            restrictedToMinimumLevel: LogEventLevel.Error
+        )
+        ```
+
+        ```C#
+        public class CustomApiFormatter : IBatchFormatter
+        {
+            public void Format(IEnumerable<string> logEvents, TextWriter output)
+            {
+                var requestInput = new CustomApiRequestBody();
+
+                foreach (var logEvent in logEvents)
+                {
+                    // logEvent為Serilog制式化物件Json string，這邊轉換為目標API Request Body格式
+                }
+                string outputJson = JsonConvert.SerializeObject(requestInput);
+                output.Write(outputJson);
+            }
+        }
+        ```
+
+* ### FakeItEasy
+
+    可讀性更好的Stub, Mock套件
 
 * ### Moq
 
@@ -342,6 +423,38 @@
 * ### Dapper
 
     輕量化SQL套件，簡化ADO.Net流程
+
+    * Json mapping (將DB Value與Json Object直接轉換，此例提供Type可直接做轉換)
+
+    ```C#
+    // Program.cs
+    SqlMapper.AddTypeHandler(typeof(string[]), new JsonObjectTypeHandler()); 
+
+    // JsonObjectTypeHandler.cs
+    public class JsonObjectTypeHandler : SqlMapper.ITypeHandler
+    {
+        public void SetValue(IDbDataParameter parameter, object value)
+        {
+            parameter.Value = (value == null)
+                ? (object)DBNull.Value
+                : JsonConvert.SerializeObject(value);
+            parameter.DbType = DbType.String;
+        }
+
+        public object Parse(Type destinationType, object value)
+        {
+            if (value != null)
+            {
+                return JsonConvert.DeserializeObject(value.ToString(), destinationType);
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+    ```
+
 
 * ### Microsoft.EntityFrameworkCore
 

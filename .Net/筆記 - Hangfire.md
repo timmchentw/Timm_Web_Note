@@ -27,21 +27,23 @@
 * **原始碼**: [Demo Repository](https://github.com/timmchentw/HangfireDemo)
 
 #### 目錄
-* [安裝筆記](#安裝筆記)
-    * [客製化設定](#客製化設定)
-* [應用範例](#應用範例)
-    * 建立與呼叫Job (Expression)
-    * Job Name顯示在Dashboard
-    * Controller搭配Swagger允許程式自動建立Job
-    * 使用Job Enum作為API參數
-* [進階擴充](#進階擴充)
-    * Job Parameters (客製化參數)
-* [自定義擴充](#自定義擴充)
-    * [整合Identity](#整合Identity)
-    * [執行Console App](#%E5%9F%B7%E8%A1%8Cconsole-app)
-    * [整合Application Insights & Logger](#%E6%95%B4%E5%90%88application-insights--logger)
-* [注意事項](#注意事項)
-* [相關資源](#相關資源)
+- [Hangfire筆記](#hangfire筆記)
+      - [官網: https://www.hangfire.io](#官網-httpswwwhangfireio)
+      - [簡介](#簡介)
+      - [使用心得](#使用心得)
+      - [設定環境](#設定環境)
+      - [目錄](#目錄)
+      - [安裝筆記](#安裝筆記)
+      - [客製化設定](#客製化設定)
+      - [應用範例](#應用範例)
+      - [進階擴充](#進階擴充)
+      - [自定義擴充](#自定義擴充)
+        - [整合Identity](#整合identity)
+        - [執行Console App](#執行console-app)
+        - [整合Application Insights \& Logger](#整合application-insights--logger)
+      - [注意事項](#注意事項)
+      - [可優化內容](#可優化內容)
+      - [相關資源](#相關資源)
 
 #### 安裝筆記
 1. 安裝Nuget Packages
@@ -759,7 +761,7 @@
             return (hostContext) =>
             {
                 var appInsightsConfig = hostContext.Configuration.GetSection(nameof(Config.ApplicationInsights))
-                                            .Get<Config.ApplicationInsights>();
+                                    .Get<Config.ApplicationInsights>();
                 var emailConfig = hostContext.Configuration.GetSection(nameof(Config.SystemEmailConfig))
                                     .Get<Config.SystemEmailConfig>();
 

@@ -16,6 +16,8 @@
 
 ### IIS
 
+* [IISLog分析工具](https://dotblogs.com.tw/AceLee/2018/09/14/160817)
+
 ### Task Scheduler
 
 ## 實用語法
@@ -30,6 +32,10 @@ nslookup your.domain
 
 ```CMD
 telnet your.domain port
+```
+
+```PowerShell
+Test-NetConnection -ComputerName “domain.name” -Port 443
 ```
 
 ## TLS

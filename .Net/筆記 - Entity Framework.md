@@ -13,6 +13,24 @@
   - [Database First](#database-first)
     - [.edmx](#edmx)
   - [參考資源](#參考資源)
+  - [Entity Framework 9](#entity-framework-9)
+    - [LINQ and SQL translation](#linq-and-sql-translation)
+      - [Parameterzied primitive collections](#parameterzied-primitive-collections)
+      - [Subquery](#subquery)
+      - [Aggregate](#aggregate)
+      - [Count != 0](#count--0)
+      - [Null](#null)
+      - [Order](#order)
+      - [Not](#not)
+      - [Group By](#group-by)
+      - [ExecuteUpdate](#executeupdate)
+  - [Model building](#model-building)
+    - [Auto-compiled models](#auto-compiled-models)
+    - [MSBuild integration](#msbuild-integration)
+    - [Read-only primitive collections](#read-only-primitive-collections)
+    - [Specify fill-factor for keys and indexes](#specify-fill-factor-for-keys-and-indexes)
+    - [Make existing model building conventions more extensible](#make-existing-model-building-conventions-more-extensible)
+    - [Update ApplyConfigurationsFromAssembly to call non-public constructors](#update-applyconfigurationsfromassembly-to-call-non-public-constructors)
 
 
 ## Code First
@@ -304,10 +322,10 @@ public class UserRole
 - Id </br>
   設定Int Property為"Id"，EF Core將自動建立PK、Identity (流水號)
 
-* AsQueryable </br>
+- AsQueryable </br>
   一般Select DB Repo返回的物件，屬於Lazy Loading，只有在ToList, First, Count...等執行指令時才會跑
-  * 如果在Where條件中加入外部Function，會因為Linq to sql無法翻譯，而出現失效的狀況
-* AsNoTracking </br>
+  - 如果在Where條件中加入外部Function，會因為Linq to sql無法翻譯，而出現失效的狀況
+- AsNoTracking </br>
   取得即時的資料
   
 - 連動表 (Foreign Key Linked)
@@ -384,3 +402,144 @@ public class UserRole
 ## 參考資源
 - [Enum to DB](https://stackoverflow.com/questions/50375357/how-to-create-a-table-corresponding-to-enum-in-ef-core-code-first)
 - [Owned Entity Types](https://learn.microsoft.com/en-us/ef/core/modeling/owned-entities)
+
+
+## Entity Framework 9
+
+### LINQ and SQL translation
+
+#### Parameterzied primitive collections
+
+#### Subquery
+  ![image](./images/netcore_releases/9_30.png)
+
+#### Aggregate
+  ![image](./images/netcore_releases/9_31.png)
+
+#### Count != 0
+
+- 用Exist做取代
+  ![image](./images/netcore_releases/9_32.png)
+
+#### Null
+
+#### Order
+
+- 可自動抓Key，不須指定column
+  ![image](./images/netcore_releases/9_33.png)
+
+#### Not
+
+- Not優化效能，而不是整個`NOT(...)`
+  ![image](./images/netcore_releases/9_34.png)
+
+- Case 改用`~`做優化
+  ![image](./images/netcore_releases/9_35.png)
+
+#### Group By
+
+- 支援Group By之後的功能 (如Count, MAX等等)
+  ![image](./images/EF/2.png)
+
+#### ExecuteUpdate
+
+- 支援直接Update複雜操作
+  ![image](./images/EF/3.png)
+  ![image](./images/EF/4.png)
+
+## Model building
+
+### Auto-compiled models
+
+- 開始預設生成Pre-Compiled models
+  - 優點: 預先Compile，提升App啟動EF時的速度，尤其對大型專案有效(多type、properties)
+  - 用途: Model scanning, compilation, serialization, loading at startup
+  - [MSDN - Compiled models](https://learn.microsoft.com/en-us/ef/core/performance/advanced-performance-topics?tabs=with-di%2Cexpression-api-with-constant#compiled-models)
+  - 原始手動指令:
+
+    ```Bash
+    dotnet ef dbcontext optimize
+    ```
+
+    - Run CMD後，還要根據指示在Configuration添加`.UseModel(MyCompiledModels.XXXContextModel.Instance)`
+    ![image](./images/EF/6.png)
+
+    ![image](./images/EF/5.png)
+
+### MSBuild integration
+
+- 上述Pre-compiled model需要安裝`Microsoft.EntityFrameworkCore.Tasks`
+- 並在`.csproj`當中設定
+
+  ```XML
+  <PropertyGroup>
+      <EFOptimizeContext>true</EFOptimizeContext>
+      <EFScaffoldModelStage>build</EFScaffoldModelStage>
+  </PropertyGroup>
+  ```
+
+- Build成功後顯示Optimizing DbContext
+    ![image](./images/EF/7.png)
+
+
+### Read-only primitive collections
+
+- 開始支援Read-only primitive collections
+  - Primitive collections 始於[EF 8](https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-8.0/whatsnew#primitive-collections)，可將簡單型別以JSON儲存於DB Column (`numeric`, `bool`, `string`, `date`, `enum`, `Uri`...)
+
+  ```C#
+  // Entity model
+  public class PrimitiveCollections
+  {
+      public IEnumerable<int> Ints { get; set; }
+      public ICollection<string> Strings { get; set; }
+      public IList<DateOnly> Dates { get; set; }
+      public uint[] UnsignedInts { get; set; }
+      public List<bool> Booleans { get; set; }
+      public List<Uri> Urls { get; set; }
+  }
+  ```
+
+  ```C#
+  // Configuration
+  modelBuilder
+    .Entity<PrimitiveCollections>()
+    .Property(e => e.Booleans)
+    .HasMaxLength(1024)
+    .IsUnicode(false);
+  ```
+
+- 實際應用: LINQ將產生json處理的相關SQL
+
+    ![image](./images/EF/8.png)
+
+
+### Specify fill-factor for keys and indexes
+
+- Primary Key & Index開始支援Fill factor
+  - Fill factor: 可手動設定Index page的"初始"使用率
+    - Index page為index儲存的單位 (大小固定為8kb=8096字節)
+    - Fill factor原始為100%，如降低可減少Page splits的狀況
+    - 詳細參考[MSDN](https://learn.microsoft.com/en-us/sql/relational-databases/indexes/specify-fill-factor-for-an-index?view=sql-server-ver16)
+    ![image](./images/EF/9.png)
+
+### Make existing model building conventions more extensible
+
+- [Model building conventions](https://learn.microsoft.com/en-us/ef/core/what-is-new/ef-core-7.0/whatsnew#model-building-conventions): EF自動偵測與設定model的convention，能允許再被客製化 (比如設定所有entity的string column max length為500)
+  - [MSDN](https://learn.microsoft.com/en-us/ef/core/modeling/bulk-configuration#conventions): 詳細Convention使用範例
+- 擴充若干Convention的方法
+  - 官方[舉例](https://github.com/dotnet/EntityFramework.Docs/blob/main/samples/core/Miscellaneous/NewInEFCore9/CustomConventionsSample.cs): 客製化`PropertyDiscoveryConvention`識別自定義 `Persist` attribute的設定簡化
+    ![image](./images/EF/15.png)
+    - EF 9以前:
+    ![image](./images/EF/14.png)
+    ![image](./images/EF/11.png)
+    - EF 9以後: 新增`PropertyDiscoveryConvention.IsCandidatePrimitiveProperty`
+    ![image](./images/EF/12.png)
+    - 其他`PropertyDiscoveryConvention`的擴充functions
+    ![image](./images/EF/13.png)
+
+### Update ApplyConfigurationsFromAssembly to call non-public constructors
+
+- Implement IEntityTypeConfiguration擴充constructor條件
+- 用途舉例: 繼承class呼叫parent protected constructor
+    ![image](./images/EF/10.png)

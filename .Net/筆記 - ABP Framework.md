@@ -9,6 +9,27 @@
 ## 安裝
 
 
+## Entity Framework
+
+- ABP為DB實作了一套包含Unit of work、Audit log、Soft delete、常用欄位(如作者、時間)等等功能的架構，可以很方便套用
+
+### AggregateRoot
+
+- AggregateRoot會實作以下必要columns
+  - ConcurrencyStamp: 作為Save依據，避免重複Save衝突 (此欄位注意DB不可以為NULL! 沒有值的話至少為`GETID()`)
+  - ExtraProperties: 儲存額外serialize string資訊 (此欄位注意DB不可以為NULL! 沒有值的話必至少為`'{}'`)
+  ![image](./images/ABP/0.png)
+  
+- 可自行選擇Implement不同等級的Interface (有implement到的欄位DB必須要有對應的Column，一個也不能少!)
+  - FullAuditedAggregateRoot
+  - AuditedAggregateRoot
+  - CreationAuditedAggregateRoot
+  - AggregateRoot
+- 也可以選擇性只apply部分欄位
+  - IFullAuditedObject (可以從這邊看各種interface)
+  - ISoftDelete
+  - IMayHaveCreator
+
 
 ## Audit log
 

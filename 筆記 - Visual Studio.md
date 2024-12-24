@@ -97,3 +97,10 @@ dotnet dev-certs https --trust
     ![image](./images/VisualStudio/15.png)
 2. 右鍵目標→Find All References
     ![image](./images/VisualStudio/16.png)
+
+### Debug
+
+- Attach to process
+  - 可設定Attach to 某一個正在執行的process，如另一個Project app、或是遠端電腦、Web App等
+    ![image](./images/VisualStudio/17.png)
+- 

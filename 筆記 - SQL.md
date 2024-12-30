@@ -66,6 +66,9 @@
     - [注意事項:](#注意事項)
     - [陷阱:](#陷阱)
     - [規範:](#規範)
+  - [筆記](#筆記)
+    - [Tables](#tables)
+    - [Collation 資料庫定序](#collation-資料庫定序)
 
 
 
@@ -617,6 +620,8 @@ GO
 
 * Clusterd: Index順序與資料順序相同，不須額外儲存索引資料 (Query效能較佳)，一張表只能有一個(適合如Sequence序列資料)
 * Non-Clustered: Index順序與資料順序不相關，需額外儲存索引資料、但不須重新排序(寫入效能較佳)，一張表可多個
+* 延伸閱讀: Index原理與Page split - [GUID 叢集索引測試 2：索引碎片化分析與資料表虛胖問題](https://blog.darkthread.net/blog/guid-clust-idx-frag-n-space/)
+
 
 ```SQL
 CREATE NONCLUSTERED INDEX IX__MY_TABLE__MY_COL ON MY_TABLE(MY_COL)

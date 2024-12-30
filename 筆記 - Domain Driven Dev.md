@@ -8,7 +8,7 @@
     - [Settings](#settings)
     - [DDD架構實作](#ddd架構實作)
       - [Entity: 最底層的實體物件](#entity-最底層的實體物件)
-      - [AggregateRoot: 集合Properties \& Entities的集合體，可包含操作邏輯 (如CRUD)](#aggregateroot-集合properties--entities的集合體可包含操作邏輯-如crud)
+      - [AggregateRoot: 集合Properties \& Entities的集合體](#aggregateroot-集合properties--entities的集合體)
       - [Audit Properties: 提供不少Interface/Class作為擴充properties使用](#audit-properties-提供不少interfaceclass作為擴充properties使用)
       - [Value Object: 描述Domain但不含邏輯的值物件](#value-object-描述domain但不含邏輯的值物件)
       - [Repositories: Domain與資料層的中介，負責資料處理、操作等](#repositories-domain與資料層的中介負責資料處理操作等)
@@ -192,11 +192,11 @@
 
 ### <a name='DDD'></a>DDD架構實作
 
-  #### Entity: 最底層的實體物件
+#### Entity: 最底層的實體物件
 
-  - 有單一Id Property則繼承這個abstract class，並且給予Id型別 (Guid, int...)
-  - `EntityEquals` 提供比較方法
-  - 提供Cache方法，DI時使用`context.Services.AddEntityCache<MyClass, Guid>();`，也可在同時使用設定、model mapping等等
+- 有單一Id Property則繼承這個abstract class，並且給予Id型別 (Guid, int...)
+- `EntityEquals` 提供比較方法
+- 提供Cache方法，DI時使用`context.Services.AddEntityCache<MyClass, Guid>();`，也可在同時使用設定、model mapping等等
 
     ```C#
     public class Book : Entity<Guid>
@@ -242,7 +242,10 @@
     }
     ```
 
-  #### AggregateRoot: 集合Properties & Entities的集合體，可包含操作邏輯 (如CRUD)
+#### AggregateRoot: 集合Properties & Entities的集合體
+  
+- 可包含操作邏輯 (如CRUD)，注意只針對其自身的型別與實體的操作
+  - 比如新增/刪除Owned entity instance
 
 ```C#
 public class Order : AggregateRoot<Guid>
@@ -296,14 +299,14 @@ public class Order : AggregateRoot<Guid>
 }
 ```
 
-  #### Audit Properties: 提供不少Interface/Class作為擴充properties使用
+#### Audit Properties: 提供不少Interface/Class作為擴充properties使用
 
-  - 比如: IHasCreationTime, IMayHaveCreator, ICreationAuditedObject
+- 比如: IHasCreationTime, IMayHaveCreator, ICreationAuditedObject
 
-  #### Value Object: 描述Domain但不含邏輯的值物件
+#### Value Object: 描述Domain但不含邏輯的值物件
 
-  - `ValueEquals` 提供比較方法
-  - 無特定ID結構，較多用於比較值
+- `ValueEquals` 提供比較方法
+- 無特定ID結構，較多用於比較值
 
     ```C#
     public class Address : ValueObject
@@ -619,6 +622,7 @@ public class Order : AggregateRoot<Guid>
 
   #### Domain Service: 商業邏輯存在的地方
 
+  - 用途: 處理資料的邏輯(比如不可重複、特定規則等等) → 與AggregateRoot不同的地方是，其只針對本身Property進行操作，而如到DB查詢重複、數量限制等等，還是需要Domain service進行
   - 預設DI週期為Transient
   - 可使用預設Injected Properties，如`ILogger`, `IGuidGenerator`
   - 命名suffix推薦: Manager / Service
@@ -691,6 +695,7 @@ public class Order : AggregateRoot<Guid>
   #### Application Service
 
   - 與Domain Service比較:
+
     ||Application|Domain|
     |--|--|--|
     |內容|跟使用者互動有關的行為(如Web)|核心邏輯、獨立領域知識|

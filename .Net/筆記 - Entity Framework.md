@@ -6,6 +6,9 @@
     - [DbSet](#dbset)
       - [Migrate Database](#migrate-database)
       - [Fluent API](#fluent-api)
+        - [Owned](#owned)
+        - [Automapper範例](#automapper範例)
+      - [Many to many Relationship](#many-to-many-relationship)
       - [Eager, Lazy, Implicit Load](#eager-lazy-implicit-load)
     - [Data Setup](#data-setup)
     - [Commands (method-based query syntax)](#commands-method-based-query-syntax)
@@ -155,9 +158,11 @@ public partial class Role
 }
 ```
 
-- Owned
+##### Owned
   - 用於定義某表附屬於特定表當中，不能單獨存在，一般適用於關聯表(如多對多)
-    - 優點: 主表不用特別處理關連關係的IDs，而是可以直接關連整個Owned物件
+    - 優點: 
+      - 主表不用特別處理關連關係的IDs，而是可以直接關連整個Owned物件
+      - 附屬表不用自己建立configuration檔案，而是寫在主表configuration當中
     - 注意: 連query、update等等都不能單獨處理
     - 替換關聯關係，則需要用整個entity作替代 (可用Automapper由ID轉Entity)
   - 目標Entity加上 `[Owned]` attribute
@@ -175,16 +180,20 @@ public class MyDbContext : DbContext
     {
         // User為主表，關連多個UserRoles
         modelBuilder.Entity<User>()
-            .OwnsMany(u => u.UserRoles, ur =>
-            {
-                // 附屬表提供關連主表Id
-                ur.WithOwner().HasForeignKey(ur => ur.UserId);
-                // 附屬表提供關連副表Id
-                ur.HasOne(ur => ur.Role).WithMany().HasForeignKey(ur => ur.RoleId);
-                ur.Property(ur => ur.Seq).ValueGeneratedOnAdd();
-            });
-
-                        entity.Navigation(x => )
+                    .OwnsMany(u => u.UserRoles, ur =>
+                    {
+                        // 附屬表提供關連主表Id
+                        ur.WithOwner()
+                          .HasForeignKey(ur => ur.UserId);
+                        // 附屬表提供關連副表Id
+                        ur.HasOne(ur => ur.Role)
+                          .WithMany()
+                          .HasForeignKey(ur => ur.RoleId)
+                          .OnDelete(DeleteBehavior.Cascade);
+                        // 這邊還可以加一些附屬表自己的Config設定
+                        ur.Property(ur => ur.Seq)
+                          .ValueGeneratedOnAdd();
+                    });
     }
 }
 
@@ -216,100 +225,155 @@ public class UserRole
 
 ```
 
-  - Automapper範例
-    - 呈上的關連關係，可以透過AutoMapper，將關連IDs，轉換成關連Entities
+##### Automapper範例
+  - 呈上的關連關係，可以透過AutoMapper，將關連IDs，轉換成關連Entities
 
-    ```C#
-    public class UserRoleUpdateDto
+  ```C#
+  public class UserRoleUpdateDto
+  {
+      public int UserId { get; set; }
+      public List<int> RoleIds { get; set; }  // 注意這邊只有ID
+  }
+  ```
+
+  ```C#
+  using AutoMapper;
+
+  public class MappingProfile : Profile
+  {
+      public MappingProfile()
+      {
+          CreateMap<UserRoleUpdateDto, User>()
+              .ForMember(
+                dest => dest.UserRoles, 
+                opt => opt.MapFrom(src => src.RoleIds.Select(roleId => new UserRole { Role = new Role { Id = roleId } })));
+      }
+  }
+  ```
+
+  ```C#
+  public class UserService
+  {
+      private readonly MyDbContext _context;
+      private readonly IMapper _mapper;
+
+      public UserService(MyDbContext context, IMapper mapper)
+      {
+          _context = context;
+          _mapper = mapper;
+      }
+
+      public async Task UpdateUserRoles(UserRoleUpdateDto dto)
+      {
+          var user = await _context.Users
+              .Include(u => u.UserRoles)
+              .ThenInclude(ur => ur.Role)
+              .FirstOrDefaultAsync(u => u.Id == dto.UserId);
+
+          if (user == null)
+          {
+              throw new Exception("User not found");
+          }
+
+          // 清除現有的 UserRoles
+          user.UserRoles.Clear();
+
+          // 使用 AutoMapper 更新 UserRoles
+          _mapper.Map(dto, user);
+
+          await _context.SaveChangesAsync();
+      }
+  }
+  ```
+
+#### Many to many Relationship
+
+- 主表與副表、關聯表可以做各自的關聯以外，也可以簡化關聯表的property，達到直接主表關聯副表的用法
+- 優點: 不需要特別操作關聯表，簡化設定與整體操作 (主表→關聯表→副表簡化成主表→副表)
+- 缺點: 要更改關聯關係時，需要丟入整批副表實體，而無法只使用副表ID來關聯，整體叫吃資源
+
+```C#
+public class SchoolContext : DbContext
+{
+    public DbSet<Student> Students { get; set; }
+    public DbSet<Course> Courses { get; set; }
+    public DbSet<Enrollment> Enrollments { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        public int UserId { get; set; }
-        public List<int> RoleIds { get; set; }  // 注意這邊只有ID
+        modelBuilder.Entity<Student>()
+                    .HasMany(s => s.Courses)
+                    .WithMany(c => c.Students)
+                    .UsingEntity<Enrollment>(
+                        // 這邊設定關聯表規則
+                        j => j
+                            .HasOne(e => e.Course)
+                            .WithMany()
+                            .HasForeignKey(e => e.CourseId),
+                        j => j
+                            .HasOne(e => e.Student)
+                            .WithMany()
+                            .HasForeignKey(e => e.StudentId));
     }
-    ```
+}
 
-    ```C#
-    using AutoMapper;
+public class Student
+{
+    public int StudentId { get; set; }
+    public string Name { get; set; }
+}
 
-    public class MappingProfile : Profile
-    {
-        public MappingProfile()
-        {
-            CreateMap<UserRoleUpdateDto, User>()
-                .ForMember(
-                  dest => dest.UserRoles, 
-                  opt => opt.MapFrom(src => src.RoleIds.Select(roleId => new UserRole { Role = new Role { Id = roleId } })));
-        }
-    }
-    ```
+public class Course
+{
+    public int CourseId { get; set; }
+    public string Title { get; set; }
+}
 
-    ```C#
-    public class UserService
-    {
-        private readonly MyDbContext _context;
-        private readonly IMapper _mapper;
+public class Enrollment
+{
+    public int StudentId { get; set; }
+    public Student Student { get; set; }
 
-        public UserService(MyDbContext context, IMapper mapper)
-        {
-            _context = context;
-            _mapper = mapper;
-        }
-
-        public async Task UpdateUserRoles(UserRoleUpdateDto dto)
-        {
-            var user = await _context.Users
-                .Include(u => u.UserRoles)
-                .ThenInclude(ur => ur.Role)
-                .FirstOrDefaultAsync(u => u.Id == dto.UserId);
-
-            if (user == null)
-            {
-                throw new Exception("User not found");
-            }
-
-            // 清除現有的 UserRoles
-            user.UserRoles.Clear();
-
-            // 使用 AutoMapper 更新 UserRoles
-            _mapper.Map(dto, user);
-
-            await _context.SaveChangesAsync();
-        }
-    }
-    ```
+    public int CourseId { get; set; }
+    public Course Course { get; set; }
+}
+```
 
 
 #### Eager, Lazy, Implicit Load
 
-  - Lazy (Deferred): 每次有需要再取得資料
-  
-    ```C#
-    # Users參數必須是Virtual才能套用Lazy Loading
-    var users = dbContext.Users;
-    var targets = users.First().Role;
-    ```
+- Lazy (Deferred): 每次有需要再取得資料
 
-  - Eager: 一次取得所需關聯物件 (Include)
-  
-    ```C#
-    var usersWithRole = dbContext.Users.Include(user => user.Role).First();
-    ```
+  ```C#
+  # Users參數必須是Virtual才能套用Lazy Loading
+  var users = dbContext.Users;
+  var targets = users.First().Role;
+  ```
 
-    - 或可於DbContext當中自動include
+- Eager: 一次取得所需關聯物件 (Include)
 
-    ```C#
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Order>()
-            .Navigation(p => p.ShippingAddress)
-            .AutoInclude();
-    }
-    ```
+  ```C#
+  var usersWithRole = dbContext.Users.Include(user => user.Role).First();
+  ```
 
-  - Implicit: 
-  
-    ```C#
+  - 或可於DbContext當中自動include
 
-    ```
+  ```C#
+  protected override void OnModelCreating(ModelBuilder modelBuilder)
+  {
+      modelBuilder.Entity<Order>()
+          .Navigation(p => p.ShippingAddress)
+          .AutoInclude();
+  }
+  ```
+
+- Explicit: 顯式加載，使用Load手動載入
+
+  ```C#
+  var order = context.Orders.Find(orderId);
+  context.Entry(order).Reference(o => o.Customer).Load();
+
+  ```
 
 
 ### Data Setup
